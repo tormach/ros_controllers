@@ -446,6 +446,9 @@ update(const ros::Time& time, const ros::Duration& period)
             checkStateTolerancePerJoint(state_joint_error_, tolerances.goal_state_tolerance, true);
           }
 
+          // If we violate goal tolerances then hold current position
+          setHoldPosition(time_data.uptime, rt_active_goal_);
+
           rt_segment_goal->preallocated_result_->error_code = control_msgs::FollowJointTrajectoryResult::GOAL_TOLERANCE_VIOLATED;
           rt_segment_goal->preallocated_result_->error_string = joint_names_[i] + " goal error " + std::to_string( state_joint_error_.position[0] );
           rt_segment_goal->setAborted(rt_segment_goal->preallocated_result_);
