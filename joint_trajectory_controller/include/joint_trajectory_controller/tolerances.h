@@ -75,7 +75,8 @@ struct SegmentTolerances
   SegmentTolerances(const typename std::vector<StateTolerances<Scalar> >::size_type& size = 0)
     : state_tolerance(size, static_cast<Scalar>(0.0)),
       goal_state_tolerance(size, static_cast<Scalar>(0.0)),
-      goal_time_tolerance(static_cast<Scalar>(0.0))
+      goal_time_tolerance(static_cast<Scalar>(0.0)),
+      joint_limits(static_cast<Scalar>(0.0))
   {}
 
   /** State tolerances that appply during segment execution. */
@@ -83,6 +84,9 @@ struct SegmentTolerances
 
   /** State tolerances that apply for the goal state only.*/
   std::vector<StateTolerances<Scalar> > goal_state_tolerance;
+
+  /** Joint limits used to plan controlled stops (and eventually for interpolation) */
+  std::vector<StateTolerances<Scalar> > joint_limits;
 
   /** Extra time after the segment end time allowed to reach the goal state tolerances. */
   Scalar goal_time_tolerance;
@@ -304,6 +308,8 @@ SegmentTolerances<Scalar> getSegmentTolerances(const ros::NodeHandle& nh,
   {
     nh.param(joint_names[i] + "/trajectory", tolerances.state_tolerance[i].position,      0.0);
     nh.param(joint_names[i] + "/goal",       tolerances.goal_state_tolerance[i].position, 0.0);
+    nh.param(joint_names[i] + "/max_acceleration",       tolerances.joint_limits[i].acceleration, 0.0);
+    // TODO other maximums (probably not position though, should really handle that before here)
     tolerances.goal_state_tolerance[i].velocity = stopped_velocity_tolerance;
   }
 
