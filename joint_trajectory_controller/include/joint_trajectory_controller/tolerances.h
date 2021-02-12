@@ -85,7 +85,13 @@ struct SegmentTolerances
   /** State tolerances that apply for the goal state only.*/
   std::vector<StateTolerances<Scalar> > goal_state_tolerance;
 
-  /** Joint limits used to plan controlled stops (and eventually for interpolation) */
+  /**
+   * Joint limits used to plan controlled stops (and eventually for interpolation).
+   * Note this is separate from state tolerances because it's used for planning, not verification.
+   * If we added these to the state tolerances then violations would cause errors.
+   * This in theory is good but the current trajectory execution violates limits
+   * all the time if the plan isn't perfect, so we're not ready for this.
+   */
   std::vector<StateTolerances<Scalar> > joint_limits;
 
   /** Extra time after the segment end time allowed to reach the goal state tolerances. */
@@ -304,6 +310,7 @@ SegmentTolerances<Scalar> getSegmentTolerances(const ros::NodeHandle& nh,
 
   tolerances.state_tolerance.resize(n_joints);
   tolerances.goal_state_tolerance.resize(n_joints);
+  tolerances.joint_limits.resize(n_joints);
   for (unsigned int i = 0; i < n_joints; ++i)
   {
     nh.param(joint_names[i] + "/trajectory", tolerances.state_tolerance[i].position,      0.0);

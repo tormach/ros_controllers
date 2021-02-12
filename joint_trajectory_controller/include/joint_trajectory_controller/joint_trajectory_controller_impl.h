@@ -31,6 +31,7 @@
 #pragma once
 
 #include <joint_trajectory_controller/joint_trajectory_controller_fwd.h>
+#include <joint_trajectory_controller/const_accel_stop_trajectory_builder.h>
 
 namespace joint_trajectory_controller
 {
@@ -322,7 +323,17 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   }
   assert(joint_names_.size() == hold_trajectory_ptr_->trajectory.size());
 
-  if (stop_trajectory_duration_ == 0.0)
+  bool has_valid_accel_limit = true;
+  std::vector<double> max_accel;
+  for (size_t i=0; i < getNumberOfJoints(); ++i) {
+    const double a_max = default_tolerances_.joint_limits[i].acceleration;
+    has_valid_accel_limit &= a_max > 0;
+    max_accel.push_back(a_max);
+  }
+
+  if (has_valid_accel_limit) {
+    hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new ConstAccelStoptrajectoryBuilder<SegmentImpl>(stop_trajectory_duration_, max_accel, desired_state_));
+  } else if (stop_trajectory_duration_ == 0.0)
   {
     hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>(joints_));
   }
