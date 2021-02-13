@@ -133,7 +133,7 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(Trajectory* h
     hold_start_state_.velocity[0]     =  v0;
     hold_start_state_.acceleration[0] =  a;
 
-    hold_end_state_.position[0]       =  p0 + v0 * ts + a * ts * ts / 2;
+    hold_end_state_.position[0]       =  p0 + v0 * ts / 2.;
     hold_end_state_.velocity[0]       =  0.0;
     hold_end_state_.acceleration[0]   =  a;
 
