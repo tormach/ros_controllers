@@ -75,8 +75,8 @@ struct SegmentTolerances
   SegmentTolerances(const typename std::vector<StateTolerances<Scalar> >::size_type& size = 0)
     : state_tolerance(size, static_cast<Scalar>(0.0)),
       goal_state_tolerance(size, static_cast<Scalar>(0.0)),
-      goal_time_tolerance(static_cast<Scalar>(0.0)),
-      joint_limits(static_cast<Scalar>(0.0))
+      max_joint_acceleration(size, static_cast<Scalar>(0.0)),
+      goal_time_tolerance(static_cast<Scalar>(0.0))
   {}
 
   /** State tolerances that appply during segment execution. */
@@ -92,7 +92,7 @@ struct SegmentTolerances
    * This in theory is good but the current trajectory execution violates limits
    * all the time if the plan isn't perfect, so we're not ready for this.
    */
-  std::vector<StateTolerances<Scalar> > joint_limits;
+  std::vector<Scalar> max_joint_acceleration;
 
   /** Extra time after the segment end time allowed to reach the goal state tolerances. */
   Scalar goal_time_tolerance;
@@ -310,12 +310,12 @@ SegmentTolerances<Scalar> getSegmentTolerances(const ros::NodeHandle& nh,
 
   tolerances.state_tolerance.resize(n_joints);
   tolerances.goal_state_tolerance.resize(n_joints);
-  tolerances.joint_limits.resize(n_joints);
+  tolerances.max_joint_acceleration.resize(n_joints);
   for (unsigned int i = 0; i < n_joints; ++i)
   {
     nh.param(joint_names[i] + "/trajectory", tolerances.state_tolerance[i].position,      0.0);
     nh.param(joint_names[i] + "/goal",       tolerances.goal_state_tolerance[i].position, 0.0);
-    nh.param(joint_names[i] + "/max_acceleration",       tolerances.joint_limits[i].acceleration, 0.0);
+    nh.param(joint_names[i] + "/max_acceleration",       tolerances.max_joint_acceleration[i], 0.0);
     // TODO other maximums (probably not position though, should really handle that before here)
     tolerances.goal_state_tolerance[i].velocity = stopped_velocity_tolerance;
   }
