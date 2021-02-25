@@ -118,7 +118,7 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(Trajectory* h
 
   double ts = 0;
   for (unsigned int joint_index = 0; joint_index < number_of_joints; ++joint_index) {
-    ts = std::max(ts, hold_state_.velocity[joint_index] / max_accelerations_[joint_index]);
+    ts = std::max(ts, std::abs(hold_state_.velocity[joint_index] / max_accelerations_[joint_index]));
   }
 
   const typename Segment::Time end_time {start_time + ts};
