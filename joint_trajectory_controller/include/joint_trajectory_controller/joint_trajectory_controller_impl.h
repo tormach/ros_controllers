@@ -31,6 +31,7 @@
 #pragma once
 
 #include <joint_trajectory_controller/joint_trajectory_controller_fwd.h>
+#include <joint_trajectory_controller/const_accel_stop_trajectory_builder.h>
 
 namespace joint_trajectory_controller
 {
@@ -322,13 +323,21 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   }
   assert(joint_names_.size() == hold_trajectory_ptr_->trajectory.size());
 
-  if (stop_trajectory_duration_ == 0.0)
-  {
-    hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>(joints_));
+  bool has_valid_accel_limit = true;
+  for (size_t i=0; i < getNumberOfJoints(); ++i) {
+    const double a_max = default_tolerances_.max_joint_acceleration[i];
+    has_valid_accel_limit &= (a_max > 0);
   }
-  else
-  {
+
+  if (has_valid_accel_limit) {
+    ROS_INFO_NAMED(name_, "Found valid acceleration limits for all joints, using constant-acceleration stop planner for stop requests");
+    hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new ConstAccelStoptrajectoryBuilder<SegmentImpl>(stop_trajectory_duration_, default_tolerances_.max_joint_acceleration, desired_state_));
+  } else if (stop_trajectory_duration_ > 0.0) {
+    ROS_INFO_NAMED(name_, "Found non-zero stop duration, constant-time stop planner for stop requests");
     hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new StopTrajectoryBuilder<SegmentImpl>(stop_trajectory_duration_, desired_state_));
+  } else {
+    ROS_INFO_NAMED(name_, "Default stop configuration, using 'hold position' planner for stop requests");
+    hold_traj_builder_ = std::unique_ptr<TrajectoryBuilder<SegmentImpl> >(new HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>(joints_));
   }
 
   {
