@@ -52,8 +52,11 @@ TEST_F(DiffDriveControllerTest, testLinearJerkLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.37m.s-1
-  EXPECT_NEAR(new_odom.twist.twist.linear.x, 0.37, JERK_LINEAR_VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_NEAR(new_odom.twist.twist.linear.x, 0.37,
+              JERK_LINEAR_VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
@@ -62,7 +65,7 @@ TEST_F(DiffDriveControllerTest, testLinearJerkLimits)
 TEST_F(DiffDriveControllerTest, testLinearAccelerationLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -83,8 +86,11 @@ TEST_F(DiffDriveControllerTest, testLinearAccelerationLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.5 m.s-1, which is 1.0m.s-2 * 0.5s
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 0.5 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            0.5 + VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
@@ -93,7 +99,7 @@ TEST_F(DiffDriveControllerTest, testLinearAccelerationLimits)
 TEST_F(DiffDriveControllerTest, testLinearVelocityLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -114,15 +120,19 @@ TEST_F(DiffDriveControllerTest, testLinearVelocityLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 1.0 m.s-1, the limit
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 1.0 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            1.0 + VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
 }
 
-/* This test has been failing on Travis for a long time due to timing issues however it works well when ran manually
-TEST_F(DiffDriveControllerTest, testAngularJerkLimits)
+/* This test has been failing on Travis for a long time due to timing issues
+however it works well when ran manually TEST_F(DiffDriveControllerTest,
+testAngularJerkLimits)
 {
   // wait for ROS
   while(!isControllerAlive())
@@ -146,8 +156,9 @@ TEST_F(DiffDriveControllerTest, testAngularJerkLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.7rad.s-1
-  EXPECT_NEAR(new_odom.twist.twist.angular.z, 0.7, JERK_ANGULAR_VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), EPS);
+  EXPECT_NEAR(new_odom.twist.twist.angular.z, 0.7,
+JERK_ANGULAR_VELOCITY_TOLERANCE); EXPECT_LT(fabs(new_odom.twist.twist.linear.x -
+old_odom.twist.twist.linear.x), EPS);
 
   cmd_vel.angular.z = 0.0;
   publish(cmd_vel);
@@ -157,7 +168,7 @@ TEST_F(DiffDriveControllerTest, testAngularJerkLimits)
 TEST_F(DiffDriveControllerTest, testAngularAccelerationLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -178,8 +189,11 @@ TEST_F(DiffDriveControllerTest, testAngularAccelerationLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 1.0rad.s-1, which is 2.0rad.s-2 * 0.5s
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), 1.0 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), EPS);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      1.0 + VELOCITY_TOLERANCE);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            EPS);
 
   cmd_vel.angular.z = 0.0;
   publish(cmd_vel);
@@ -188,7 +202,7 @@ TEST_F(DiffDriveControllerTest, testAngularAccelerationLimits)
 TEST_F(DiffDriveControllerTest, testAngularVelocityLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -209,8 +223,11 @@ TEST_F(DiffDriveControllerTest, testAngularVelocityLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 2.0rad.s-1, the limit
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), 2.0 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), EPS);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      2.0 + VELOCITY_TOLERANCE);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            EPS);
 
   cmd_vel.angular.z = 0.0;
   publish(cmd_vel);
@@ -223,7 +240,7 @@ int main(int argc, char** argv)
 
   ros::AsyncSpinner spinner(1);
   spinner.start();
-  //ros::Duration(0.5).sleep();
+  // ros::Duration(0.5).sleep();
   int ret = RUN_ALL_TESTS();
   spinner.stop();
   ros::shutdown();

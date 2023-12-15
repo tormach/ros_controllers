@@ -37,7 +37,6 @@
 
 #pragma once
 
-
 #include <vector>
 #include <string>
 
@@ -47,16 +46,14 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <realtime_tools/realtime_buffer.h>
 
-
 namespace forward_command_controller
 {
-
 /**
  * \brief Forward command controller for a set of joints.
  *
  * This class forwards the command signal down to a set of joints.
- * Command signal and joint hardware interface are of the same type, e.g. effort commands for an effort-controlled
- * joint.
+ * Command signal and joint hardware interface are of the same type, e.g. effort
+ * commands for an effort-controlled joint.
  *
  * \tparam T Type implementing the JointCommandInterface.
  *
@@ -69,28 +66,36 @@ namespace forward_command_controller
  * - \b command (std_msgs::Float64MultiArray) : The joint commands to apply.
  */
 template <class T>
-class ForwardJointGroupCommandController: public controller_interface::Controller<T>
+class ForwardJointGroupCommandController
+  : public controller_interface::Controller<T>
 {
 public:
-  ForwardJointGroupCommandController() {}
-  ~ForwardJointGroupCommandController() {sub_command_.shutdown();}
+  ForwardJointGroupCommandController()
+  {
+  }
+  ~ForwardJointGroupCommandController()
+  {
+    sub_command_.shutdown();
+  }
 
-  bool init(T* hw, ros::NodeHandle &n)
+  bool init(T* hw, ros::NodeHandle& n)
   {
     // List of controlled joints
     std::string param_name = "joints";
-    if(!n.getParam(param_name, joint_names_))
+    if (!n.getParam(param_name, joint_names_))
     {
-      ROS_ERROR_STREAM("Failed to getParam '" << param_name << "' (namespace: " << n.getNamespace() << ").");
+      ROS_ERROR_STREAM("Failed to getParam '" << param_name << "' (namespace: "
+                                              << n.getNamespace() << ").");
       return false;
     }
     n_joints_ = joint_names_.size();
 
-    if(n_joints_ == 0){
+    if (n_joints_ == 0)
+    {
       ROS_ERROR_STREAM("List of joint names is empty.");
       return false;
     }
-    for(unsigned int i=0; i<n_joints_; i++)
+    for (unsigned int i = 0; i < n_joints_; i++)
     {
       try
       {
@@ -105,20 +110,23 @@ public:
 
     commands_buffer_.writeFromNonRT(std::vector<double>(n_joints_, 0.0));
 
-    sub_command_ = n.subscribe<std_msgs::Float64MultiArray>("command", 1, &ForwardJointGroupCommandController::commandCB, this);
+    sub_command_ = n.subscribe<std_msgs::Float64MultiArray>(
+        "command", 1, &ForwardJointGroupCommandController::commandCB, this);
     return true;
   }
 
   void starting(const ros::Time& time);
   void update(const ros::Time& /*time*/, const ros::Duration& /*period*/)
   {
-    std::vector<double> & commands = *commands_buffer_.readFromRT();
-    for(unsigned int i=0; i<n_joints_; i++)
-    {  joints_[i].setCommand(commands[i]);  }
+    std::vector<double>& commands = *commands_buffer_.readFromRT();
+    for (unsigned int i = 0; i < n_joints_; i++)
+    {
+      joints_[i].setCommand(commands[i]);
+    }
   }
 
-  std::vector< std::string > joint_names_;
-  std::vector< hardware_interface::JointHandle > joints_;
+  std::vector<std::string> joint_names_;
+  std::vector<hardware_interface::JointHandle> joints_;
   realtime_tools::RealtimeBuffer<std::vector<double> > commands_buffer_;
   unsigned int n_joints_;
 
@@ -126,13 +134,16 @@ private:
   ros::Subscriber sub_command_;
   void commandCB(const std_msgs::Float64MultiArrayConstPtr& msg)
   {
-    if(msg->data.size()!=n_joints_)
+    if (msg->data.size() != n_joints_)
     {
-      ROS_ERROR_STREAM("Dimension of command (" << msg->data.size() << ") does not match number of joints (" << n_joints_ << ")! Not executing!");
+      ROS_ERROR_STREAM("Dimension of command ("
+                       << msg->data.size()
+                       << ") does not match number of joints (" << n_joints_
+                       << ")! Not executing!");
       return;
     }
     commands_buffer_.writeFromNonRT(msg->data);
   }
 };
 
-}
+}  // namespace forward_command_controller

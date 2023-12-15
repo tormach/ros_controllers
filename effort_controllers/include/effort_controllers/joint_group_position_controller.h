@@ -37,7 +37,6 @@
 
 #pragma once
 
-
 #include <control_msgs/JointControllerState.h>
 #include <control_toolbox/pid.h>
 #include <controller_interface/controller.h>
@@ -50,9 +49,9 @@
 
 namespace effort_controllers
 {
-
 /**
- * \brief Forward command controller for a set of effort controlled joints (torque or force).
+ * \brief Forward command controller for a set of effort controlled joints
+ * (torque or force).
  *
  * This class forwards the commanded efforts down to a set of joints.
  *
@@ -64,30 +63,33 @@ namespace effort_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64MultiArray) : The joint efforts to apply
  */
-class JointGroupPositionController : public controller_interface::Controller<hardware_interface::EffortJointInterface>
+class JointGroupPositionController
+  : public controller_interface::Controller<
+        hardware_interface::EffortJointInterface>
 {
 public:
   JointGroupPositionController();
   ~JointGroupPositionController();
 
-  bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n);
+  bool init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle& n);
   void update(const ros::Time& /*time*/, const ros::Duration& /*period*/);
   void starting(const ros::Time& /*time*/);
 
-  std::vector< std::string > joint_names_;
-  std::vector< hardware_interface::JointHandle > joints_;
+  std::vector<std::string> joint_names_;
+  std::vector<hardware_interface::JointHandle> joints_;
   realtime_tools::RealtimeBuffer<std::vector<double> > commands_buffer_;
   unsigned int n_joints_;
 
 private:
   ros::Subscriber sub_command_;
 
-  std::vector<control_toolbox::Pid> pid_controllers_;       /**< Internal PID controllers. */
+  std::vector<control_toolbox::Pid> pid_controllers_; /**< Internal PID
+                                                         controllers. */
 
   std::vector<urdf::JointConstSharedPtr> joint_urdfs_;
 
   void commandCB(const std_msgs::Float64MultiArrayConstPtr& msg);
-  void enforceJointLimits(double &command, unsigned int index);
-}; // class
+  void enforceJointLimits(double& command, unsigned int index);
+};  // class
 
-} // namespace
+}  // namespace effort_controllers

@@ -41,11 +41,12 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
   // Expect server is alive
   EXPECT_TRUE(ros::service::exists("diffbot_controller/set_parameters", true));
 
-  dynamic_reconfigure::ReconfigureRequest  srv_req;
+  dynamic_reconfigure::ReconfigureRequest srv_req;
   dynamic_reconfigure::ReconfigureResponse srv_resp;
 
   // Expect server is callable (get-fashion)
-  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req, srv_resp));
+  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req,
+                                 srv_resp));
 
   EXPECT_EQ(1, srv_resp.config.bools.size());
 
@@ -101,7 +102,8 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
   srv_req.config.bools.push_back(bool_param);
 
   // Expect server is callable (set-fashion)
-  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req, srv_resp));
+  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req,
+                                 srv_resp));
 
   EXPECT_EQ(1, srv_resp.config.bools.size());
 
@@ -133,7 +135,7 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
 TEST_F(DiffDriveControllerTest, testDynReconfEnableTf)
 {
   // wait for ROS
-  while(!isControllerAlive() && ros::ok())
+  while (!isControllerAlive() && ros::ok())
   {
     ros::Duration(0.1).sleep();
   }
@@ -146,7 +148,7 @@ TEST_F(DiffDriveControllerTest, testDynReconfEnableTf)
   // check the odom frame doesn't exist
   EXPECT_FALSE(listener.frameExists("odom"));
 
-  dynamic_reconfigure::ReconfigureRequest  srv_req;
+  dynamic_reconfigure::ReconfigureRequest srv_req;
   dynamic_reconfigure::ReconfigureResponse srv_resp;
 
   dynamic_reconfigure::BoolParameter bool_param;
@@ -155,7 +157,8 @@ TEST_F(DiffDriveControllerTest, testDynReconfEnableTf)
 
   srv_req.config.bools.push_back(bool_param);
 
-  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req, srv_resp));
+  EXPECT_TRUE(ros::service::call("diffbot_controller/set_parameters", srv_req,
+                                 srv_resp));
 
   ros::Duration(2.0).sleep();
   // check the odom frame doesn't exist

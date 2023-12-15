@@ -50,29 +50,47 @@
 
 namespace joint_trajectory_controller
 {
-  struct TimeData
+struct TimeData
+{
+  TimeData() : time(0.0), period(0.0), uptime(0.0)
   {
-    TimeData() : time(0.0), period(0.0), uptime(0.0) {}
+  }
 
-    ros::Time     time;   ///< Time of last update cycle
-    ros::Duration period; ///< Period of last update cycle
-    ros::Time     uptime; ///< Controller uptime. Set to zero at every restart.
-  };
+  ros::Time time;        ///< Time of last update cycle
+  ros::Duration period;  ///< Period of last update cycle
+  ros::Time uptime;      ///< Controller uptime. Set to zero at every restart.
+};
+
+class SomeObjectBase
+{
+public:
+  SomeObjectBase(std::string name = "SomeObjectBase")
+  {
+    this->name = name;
+    ROS_WARN("%s CONSTRUCTOR", name.c_str());
+  }
+  ~SomeObjectBase()
+  {
+    ROS_WARN("%s DESTRUCTOR", name.c_str());
+  }
+  std::string name = "SomeObjectBase";
+};
 
 /**
- * \brief Controller for executing joint-space trajectories on a group of joints.
+ * \brief Controller for executing joint-space trajectories on a group of
+ * joints.
  *
- * \note Non-developer documentation and usage instructions can be found in the package's ROS wiki page.
+ * \note Non-developer documentation and usage instructions can be found in the
+ * package's ROS wiki page.
  *
- * \tparam SegmentImpl Trajectory segment representation to use. The type must comply with the following structure:
- * \code
- * class FooSegment
+ * \tparam SegmentImpl Trajectory segment representation to use. The type must
+ * comply with the following structure: \code class FooSegment
  * {
  * public:
  *   // Required types
- *   typedef double                 Scalar; // Scalar can be anything convertible to double
- *   typedef Scalar                 Time;
- *   typedef PosVelAccState<Scalar> State;
+ *   typedef double                 Scalar; // Scalar can be anything
+ * convertible to double typedef Scalar                 Time; typedef
+ * PosVelAccState<Scalar> State;
  *
  *   // Default constructor
  *   FooSegment();
@@ -100,20 +118,23 @@ namespace joint_trajectory_controller
  * };
  * \endcode
  *
- * \tparam HardwareInterface Controller hardware interface. Currently \p hardware_interface::PositionJointInterface,
- * \p hardware_interface::VelocityJointInterface, and \p hardware_interface::EffortJointInterface are supported
- * out-of-the-box.
+ * \tparam HardwareInterface Controller hardware interface. Currently \p
+ * hardware_interface::PositionJointInterface, \p
+ * hardware_interface::VelocityJointInterface, and \p
+ * hardware_interface::EffortJointInterface are supported out-of-the-box.
  */
-template <class SegmentImpl, class HardwareInterface, class MotionSettings = int>
-class JointTrajectoryController : public controller_interface::Controller<HardwareInterface>
+template <class SegmentImpl, class HardwareInterface,
+          class MotionSettings = int>
+class JointTrajectoryController
+  : public controller_interface::Controller<HardwareInterface>
 {
 public:
-
   JointTrajectoryController();
 
   /** \name Non Real-Time Safe Functions
    *\{*/
-  bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+  bool init(HardwareInterface* hw, ros::NodeHandle& root_nh,
+            ros::NodeHandle& controller_nh);
   /*\}*/
 
   /** \name Real-Time Safe Functions
@@ -127,71 +148,101 @@ public:
   void update(const ros::Time& time, const ros::Duration& period);
 
 protected:
-
-  virtual void checkReachedTrajectoryGoal();
+  virtual void checkReachedTrajectoryGoal(ros::Time const& uptime);
   /*\}*/
 
-  typedef JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>           JointTrajectoryControllerBaseType;
+  typedef JointTrajectoryController<SegmentImpl, HardwareInterface,
+                                    MotionSettings>
+      JointTrajectoryControllerBaseType;
 
-  typedef actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction>                  ActionServer;
-  typedef std::shared_ptr<ActionServer>                                                       ActionServerPtr;
-  typedef ActionServer::GoalHandle                                                            GoalHandle;
-  typedef realtime_tools::RealtimeServerGoalHandle<control_msgs::FollowJointTrajectoryAction> RealtimeGoalHandle;
-  typedef boost::shared_ptr<RealtimeGoalHandle>                                               RealtimeGoalHandlePtr;
-  typedef trajectory_msgs::JointTrajectory::ConstPtr                                          JointTrajectoryConstPtr;
-  typedef realtime_tools::RealtimePublisher<control_msgs::JointTrajectoryControllerState>     StatePublisher;
-  typedef std::unique_ptr<StatePublisher>                                                     StatePublisherPtr;
+  typedef actionlib::ActionServer<control_msgs::FollowJointTrajectoryAction>
+      ActionServer;
+  typedef std::shared_ptr<ActionServer> ActionServerPtr;
+  typedef ActionServer::GoalHandle GoalHandle;
+  typedef realtime_tools::RealtimeServerGoalHandle<
+      control_msgs::FollowJointTrajectoryAction>
+      RealtimeGoalHandle;
+  typedef boost::shared_ptr<RealtimeGoalHandle> RealtimeGoalHandlePtr;
+  typedef trajectory_msgs::JointTrajectory::ConstPtr JointTrajectoryConstPtr;
+  typedef realtime_tools::RealtimePublisher<
+      control_msgs::JointTrajectoryControllerState>
+      StatePublisher;
+  typedef std::unique_ptr<StatePublisher> StatePublisherPtr;
 
   typedef JointTrajectorySegment<SegmentImpl> Segment;
-  typedef std::vector<Segment> TrajectoryPerJoint; // Individual joint's trajectory
-  typedef std::vector<TrajectoryPerJoint> Trajectory; // Collection of all joint trajectories
+  typedef std::vector<Segment> TrajectoryPerJoint;     // Individual joint's
+                                                       // trajectory
+  typedef std::vector<TrajectoryPerJoint> Trajectory;  // Collection of all
+                                                       // joint trajectories
 
-  /** Carry a trajectory vector and associated settings together in a single struct for atomic pointer swap*/
-  struct ExtendedTrajectory {
-      ExtendedTrajectory() = default;
-      Trajectory trajectory;
-      MotionSettings motion_settings;
+  /** Carry a trajectory vector and associated settings together in a single
+   * struct for atomic pointer swap*/
+  struct ExtendedTrajectory
+  {
+    ExtendedTrajectory() = default;
+    Trajectory trajectory;
+    MotionSettings motion_settings;
+    bool started = false;  //!< Starts false, then flipped to true when
+                           //!< controller starts the trajectory
   };
 
+  typedef std::unique_ptr<TrajectoryBuilder<SegmentImpl> > TrajectoryBuildPtr;
   typedef std::shared_ptr<ExtendedTrajectory> ExtendedTrajectoryPtr;
   typedef realtime_tools::RealtimeBox<ExtendedTrajectoryPtr> TrajectoryBox;
   typedef typename Segment::Scalar Scalar;
 
-  typedef HardwareInterfaceAdapter<HardwareInterface, typename Segment::State> HwIfaceAdapter;
+  typedef HardwareInterfaceAdapter<HardwareInterface, typename Segment::State>
+      HwIfaceAdapter;
   typedef typename HardwareInterface::ResourceHandleType JointHandle;
 
-  MotionSettings queued_motion_settings_;        ///< Queued settings from non-realtime side
-  bool                      verbose_;            ///< Hard coded verbose flag to help in debugging
-  std::string               name_;               ///< Controller name.
-  std::vector<JointHandle>  joints_;             ///< Handles to controlled joints.
-  std::vector<bool>         angle_wraparound_;   ///< Whether controlled joints wrap around or not.
-  std::vector<std::string>  joint_names_;        ///< Controlled joint names.
-  SegmentTolerances<Scalar> default_tolerances_; ///< Default trajectory segment tolerances.
-  HwIfaceAdapter            hw_iface_adapter_;   ///< Adapts desired trajectory state to HW interface.
+  MotionSettings queued_motion_settings_;  ///< Queued settings from
+                                           ///< non-realtime side
+  bool verbose_;      ///< Hard coded verbose flag to help in debugging
+  std::string name_;  ///< Controller name.
+  std::vector<JointHandle> joints_;       ///< Handles to controlled joints.
+  std::vector<bool> angle_wraparound_;    ///< Whether controlled joints wrap
+                                          ///< around or not.
+  std::vector<std::string> joint_names_;  ///< Controlled joint names.
+  SegmentTolerances<Scalar> default_tolerances_;  ///< Default trajectory
+                                                  ///< segment tolerances.
+  HwIfaceAdapter hw_iface_adapter_;  ///< Adapts desired trajectory state to HW
+                                     ///< interface.
 
-  RealtimeGoalHandlePtr     rt_active_goal_;     ///< Currently active action goal, if any.
+  RealtimeGoalHandlePtr rt_active_goal_;  ///< Currently active action goal, if
+                                          ///< any.
 
   /**
-   * Thread-safe container with a smart pointer to trajectory currently being followed.
-   * Can be either a hold trajectory or a trajectory received from a ROS message.
+   * Thread-safe container with a smart pointer to trajectory currently being
+   * followed. Can be either a hold trajectory or a trajectory received from a
+   * ROS message.
    *
-   * We store the hold trajectory in a separate class member because the \p starting(time) method must be realtime-safe.
-   * The (single segment) hold trajectory is preallocated at initialization time and its size is kept unchanged.
+   * We store the hold trajectory in a separate class member because the \p
+   * starting(time) method must be realtime-safe. The (single segment) hold
+   * trajectory is preallocated at initialization time and its size is kept
+   * unchanged.
    */
   TrajectoryBox curr_trajectory_box_;
-  ExtendedTrajectoryPtr hold_trajectory_ptr_; ///< Last hold trajectory values.
+  ExtendedTrajectoryPtr rt_hold_trajectory_ptr_;  ///< For use in realtime only,
+                                                  ///< for plan / execution of a
+                                                  ///< stop / hold requested
+                                                  ///< from RT
 
-  typename Segment::State current_state_;         ///< Preallocated workspace variable.
-  typename Segment::State desired_state_;         ///< Preallocated workspace variable.
-  typename Segment::State old_desired_state_;     ///< Preallocated workspace variable.
-  typename Segment::State state_error_;           ///< Preallocated workspace variable.
-  typename Segment::State desired_joint_state_;   ///< Preallocated workspace variable.
-  typename Segment::State state_joint_error_;     ///< Preallocated workspace variable.
+  typename Segment::State current_state_;  ///< Preallocated workspace variable.
+  typename Segment::State desired_state_;  ///< Preallocated workspace variable.
+  typename Segment::State old_desired_state_;  ///< Preallocated workspace
+                                               ///< variable.
+  typename Segment::State state_error_;  ///< Preallocated workspace variable.
+  typename Segment::State desired_joint_state_;  ///< Preallocated workspace
+                                                 ///< variable.
+  typename Segment::State state_joint_error_;    ///< Preallocated workspace
+                                                 ///< variable.
 
-  // Handle that can be overridden to do additional work when an error is detected in the update() function
+  // Handle that can be overridden to do additional work when an error is
+  // detected in the update() function
   virtual void onTrajectoryError(int error_code);
 
-  std::unique_ptr<TrajectoryBuilder<SegmentImpl> > hold_traj_builder_;
+  TrajectoryBuildPtr rt_hold_traj_builder_;
+  std::atomic_bool request_stop_;
 
   realtime_tools::RealtimeBuffer<TimeData> time_data_;
   TimeData old_time_data_;
@@ -199,55 +250,82 @@ protected:
   ros::Duration state_publisher_period_;
   ros::Duration action_monitor_period_;
 
-  typename Segment::Time stop_trajectory_duration_;  ///< Duration for stop ramp. If zero, the controller stops at the actual position.
+  typename Segment::Time stop_trajectory_duration_;  ///< Duration for stop
+                                                     ///< ramp. If zero, the
+                                                     ///< controller stops at
+                                                     ///< the actual position.
   boost::dynamic_bitset<> successful_joint_traj_;
   bool allow_partial_joints_goal_;
 
+  bool rt_stop_event_triggered_;  // For RT use only!
+
   // ROS API
-  ros::NodeHandle    controller_nh_;
-  ros::Subscriber    trajectory_command_sub_;
-  ActionServerPtr    action_server_;
+  ros::NodeHandle controller_nh_;
+  ros::Subscriber trajectory_command_sub_;
+  ActionServerPtr action_server_;
   ros::ServiceServer query_state_service_;
-  StatePublisherPtr  state_publisher_;
+  StatePublisherPtr state_publisher_;
 
-  ros::Timer         goal_handle_timer_;
-  ros::Time          last_state_publish_time_;
+  ros::Timer goal_handle_timer_;
+  ros::Time last_state_publish_time_;
 
-  virtual bool updateTrajectoryCommand(const JointTrajectoryConstPtr& msg, RealtimeGoalHandlePtr gh, std::string* error_string = nullptr);
+  virtual bool updateTrajectoryCommand(const JointTrajectoryConstPtr& msg,
+                                       RealtimeGoalHandlePtr gh,
+                                       std::string* error_string = nullptr);
   virtual void trajectoryCommandCB(const JointTrajectoryConstPtr& msg);
   virtual void goalCB(GoalHandle gh);
   virtual void cancelCB(GoalHandle gh);
   virtual void preemptActiveGoal();
-  virtual bool queryStateService(control_msgs::QueryTrajectoryState::Request&  req,
-                                 control_msgs::QueryTrajectoryState::Response& resp);
+  virtual bool
+  queryStateService(control_msgs::QueryTrajectoryState::Request& req,
+                    control_msgs::QueryTrajectoryState::Response& resp);
 
-  virtual void clearQueuedSettings() { this->queued_motion_settings_ = MotionSettings();}
+  virtual MotionSettings claimQueuedSettings();
   /** RT-safe version of preemptActiveGoal */
   virtual void preemptActiveRTGoal();
 
   /**
    * \brief Publish current controller state at a throttled frequency.
-   * \note This method is realtime-safe and is meant to be called from \ref update, as it shares data with it without
-   * any locking.
+   * \note This method is realtime-safe and is meant to be called from \ref
+   * update, as it shares data with it without any locking.
    */
   void publishState(const ros::Time& time);
 
-  /** Actual update method internals (caller manages realtime access to trajectory) */
-  void update_joint_trajectory(Trajectory &curr_traj, const TimeData& time_data, const ros::Duration& period);
+  /** Actual update method internals (caller manages realtime access to
+   * trajectory) */
+  void update_joint_trajectory(Trajectory& curr_traj, const TimeData& time_data,
+                               const ros::Duration& period);
 
-  /** Do realtime-safe acquisitions of time / trajectory pointer data at the start of an update */
-  void prepare_for_update(const ros::Time& time, const ros::Duration& period, ExtendedTrajectoryPtr &traj_ptr_out, TimeData &time_data);
+  /** Do realtime-safe acquisitions of time / trajectory pointer data at the
+   * start of an update */
+  void prepare_for_update(const ros::Time& time, const ros::Duration& period,
+                          ExtendedTrajectoryPtr& traj_ptr_out,
+                          TimeData& time_data);
 
   /**
    * \brief Hold the current position.
    *
-   * Substitutes the current trajectory with a single-segment one going from the current position and velocity to
-   * zero velocity.
-   * \see parameter stop_trajectory_duration
-   * \note This method is realtime-safe.
+   * Substitutes the current trajectory with a single-segment one going from the
+   * current position and velocity to zero velocity. \see parameter
+   * stop_trajectory_duration \note This method is realtime-safe.
    */
-  void setHoldPosition(const ros::Time& time, RealtimeGoalHandlePtr gh=RealtimeGoalHandlePtr());
-  void setHoldPositionWithSettings(MotionSettings const &settings, const ros::Time& uptime, RealtimeGoalHandlePtr gh=RealtimeGoalHandlePtr());
+  void setHoldPosition(
+      const ros::Time& time,
+      RealtimeGoalHandlePtr gh = RealtimeGoalHandlePtr());  // RT use only
+
+  // Real-Time ONLY Functions (must be called within the context of an update)
+  // Like preemptActiveGoal but with configurable setting & adds error
+  // information
+  void finishActiveGoalWithError(RealtimeGoalHandlePtr& gh_ref,
+                                 const ros::Time& time, int error_code, int op);
+  // Calls finishActiveGoalWithError() with args to mark goal aborted
+  void abortActiveGoalWithError(RealtimeGoalHandlePtr& gh_ref,
+                                const ros::Time& time, int error_code);
+  // Calls finishActiveGoalWithError() with args to mark goal canceled
+  void cancelActiveGoalWithError(RealtimeGoalHandlePtr& gh_ref,
+                                 const ros::Time& time, int error_code);
+  // Calls finishActiveGoalWithError() with args to mark goal succeeded
+  void completeActiveGoal(RealtimeGoalHandlePtr& gh_ref, const ros::Time& time);
 
 protected:
   /**
@@ -256,26 +334,29 @@ protected:
   unsigned int getNumberOfJoints() const;
 
   /**
-   * @brief Updates the states by sampling the specified trajectory for each joint
-   * at the specified sampling time.
+   * @brief Updates the states by sampling the specified trajectory for each
+   * joint at the specified sampling time.
    *
    * The current state is updated based on the values transmitted by the
    * corresponding JointHandles.
    *
-   * @param sample_time Time point at which the joint trajectories have to be sampled.
-   * @param traj Trajectory containing all joint trajectories currently under execution.
+   * @param sample_time Time point at which the joint trajectories have to be
+   * sampled.
+   * @param traj Trajectory containing all joint trajectories currently under
+   * execution.
    *
    * @note This function is NOT thread safe but intended to be used in the
    * update-function.
    */
-  void updateStates(const ros::Time& sample_time, Trajectory const &traj);
+  void updateStates(const ros::Time& sample_time, Trajectory const& traj);
 
 protected:
   /**
-   * @brief Returns a trajectory consisting of joint trajectories with one pre-allocated
-   * segment.
+   * @brief Returns a trajectory consisting of joint trajectories with one
+   * pre-allocated segment.
    */
-  static bool createHoldTrajectory(const unsigned int& number_of_joints, Trajectory &hold_trajectory);
+  static bool createHoldTrajectory(const unsigned int& number_of_joints,
+                                   Trajectory& hold_trajectory);
 
 private:
   /**
@@ -286,20 +367,26 @@ private:
    * @param curr_traj The trajectory that is executed during the current update.
    * @param time_data Updated time data.
    */
-  virtual void updateFuncExtensionPoint(const Trajectory& curr_traj, const TimeData& time_data);
+  virtual void updateFuncExtensionPoint(const Trajectory& curr_traj,
+                                        const TimeData& time_data);
 
 private:
   /**
-   * @brief Updates the pre-allocated feedback of the current active goal (if any)
-   * based on the current state values.
+   * @brief Updates the pre-allocated feedback of the current active goal (if
+   * any) based on the current state values.
    *
    * @note This function is NOT thread safe but intended to be used in the
    * update-function.
    */
   void setActionFeedback();
 
+  // protected:
+  //   double scaling_factor_{ 1.0 };
+  // SomeObjectBase some_object_base_;
+  SomeObjectBase some_object_base_ = SomeObjectBase("SomeObjectBase "
+                                                    "constructor fun");
 };
 
-} // namespace
+}  // namespace joint_trajectory_controller
 
-#endif // JOINT_TRAJECTORY_CONTROLLER_FWD_H
+#endif  // JOINT_TRAJECTORY_CONTROLLER_FWD_H

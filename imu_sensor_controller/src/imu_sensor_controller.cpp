@@ -28,168 +28,210 @@
 
 /// \author: Adolfo Rodriguez Tsouroukdissian
 
-
 #include "imu_sensor_controller/imu_sensor_controller.h"
-
-
 
 namespace imu_sensor_controller
 {
+bool ImuSensorController::init(hardware_interface::ImuSensorInterface* hw,
+                               ros::NodeHandle& root_nh,
+                               ros::NodeHandle& controller_nh)
+{
+  // get all joint states from the hardware interface
+  const std::vector<std::string>& sensor_names = hw->getNames();
+  for (unsigned i = 0; i < sensor_names.size(); i++)
+    ROS_DEBUG("Got sensor %s", sensor_names[i].c_str());
 
-  bool ImuSensorController::init(hardware_interface::ImuSensorInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh)
+  // get publishing period
+  if (!controller_nh.getParam("publish_rate", publish_rate_))
   {
-    // get all joint states from the hardware interface
-    const std::vector<std::string>& sensor_names = hw->getNames();
-    for (unsigned i=0; i<sensor_names.size(); i++)
-      ROS_DEBUG("Got sensor %s", sensor_names[i].c_str());
-
-    // get publishing period
-    if (!controller_nh.getParam("publish_rate", publish_rate_)){
-      ROS_ERROR("Parameter 'publish_rate' not set");
-      return false;
-    }
-
-    for (unsigned i=0; i<sensor_names.size(); i++){
-      // sensor handle
-      sensors_.push_back(hw->getHandle(sensor_names[i]));
-
-      // realtime publisher
-      RtPublisherPtr rt_pub(new realtime_tools::RealtimePublisher<sensor_msgs::Imu>(root_nh, sensor_names[i], 4));
-      realtime_pubs_.push_back(rt_pub);
-    }
-
-    // Last published times
-    last_publish_times_.resize(sensor_names.size());
-    return true;
+    ROS_ERROR("Parameter 'publish_rate' not set");
+    return false;
   }
 
-  void ImuSensorController::starting(const ros::Time& time)
+  for (unsigned i = 0; i < sensor_names.size(); i++)
   {
-    // initialize time
-    for (unsigned i=0; i<last_publish_times_.size(); i++){
-      last_publish_times_[i] = time;
-    }
+    // sensor handle
+    sensors_.push_back(hw->getHandle(sensor_names[i]));
+
+    // realtime publisher
+    RtPublisherPtr rt_pub(
+        new realtime_tools::RealtimePublisher<sensor_msgs::Imu>(
+            root_nh, sensor_names[i], 4));
+    realtime_pubs_.push_back(rt_pub);
   }
 
-  void ImuSensorController::update(const ros::Time& time, const ros::Duration& /*period*/)
+  // Last published times
+  last_publish_times_.resize(sensor_names.size());
+  return true;
+}
+
+void ImuSensorController::starting(const ros::Time& time)
+{
+  // initialize time
+  for (unsigned i = 0; i < last_publish_times_.size(); i++)
   {
-    using namespace hardware_interface;
+    last_publish_times_[i] = time;
+  }
+}
 
-    // limit rate of publishing
-    for (unsigned i=0; i<realtime_pubs_.size(); i++){
-      if (publish_rate_ > 0.0 && last_publish_times_[i] + ros::Duration(1.0/publish_rate_) < time){
-        // try to publish
-        if (realtime_pubs_[i]->trylock()){
-          // we're actually publishing, so increment time
-          last_publish_times_[i] = last_publish_times_[i] + ros::Duration(1.0/publish_rate_);
+void ImuSensorController::update(const ros::Time& time,
+                                 const ros::Duration& /*period*/)
+{
+  using namespace hardware_interface;
 
-          // populate message
-          realtime_pubs_[i]->msg_.header.stamp = time;
-          realtime_pubs_[i]->msg_.header.frame_id = sensors_[i].getFrameId();
+  // limit rate of publishing
+  for (unsigned i = 0; i < realtime_pubs_.size(); i++)
+  {
+    if (publish_rate_ > 0.0 &&
+        last_publish_times_[i] + ros::Duration(1.0 / publish_rate_) < time)
+    {
+      // try to publish
+      if (realtime_pubs_[i]->trylock())
+      {
+        // we're actually publishing, so increment time
+        last_publish_times_[i] =
+            last_publish_times_[i] + ros::Duration(1.0 / publish_rate_);
 
-          // Orientation
+        // populate message
+        realtime_pubs_[i]->msg_.header.stamp = time;
+        realtime_pubs_[i]->msg_.header.frame_id = sensors_[i].getFrameId();
+
+        // Orientation
+        if (sensors_[i].getOrientation())
+        {
+          realtime_pubs_[i]->msg_.orientation.x =
+              sensors_[i].getOrientation()[0];
+          realtime_pubs_[i]->msg_.orientation.y =
+              sensors_[i].getOrientation()[1];
+          realtime_pubs_[i]->msg_.orientation.z =
+              sensors_[i].getOrientation()[2];
+          realtime_pubs_[i]->msg_.orientation.w =
+              sensors_[i].getOrientation()[3];
+        }
+
+        // Orientation covariance
+        if (sensors_[i].getOrientationCovariance())
+        {
+          for (unsigned j = 0;
+               j < realtime_pubs_[i]->msg_.orientation_covariance.size(); ++j)
+          {
+            realtime_pubs_[i]->msg_.orientation_covariance[j] =
+                sensors_[i].getOrientationCovariance()[j];
+          }
+        }
+        else
+        {
           if (sensors_[i].getOrientation())
           {
-            realtime_pubs_[i]->msg_.orientation.x = sensors_[i].getOrientation()[0];
-            realtime_pubs_[i]->msg_.orientation.y = sensors_[i].getOrientation()[1];
-            realtime_pubs_[i]->msg_.orientation.z = sensors_[i].getOrientation()[2];
-            realtime_pubs_[i]->msg_.orientation.w = sensors_[i].getOrientation()[3];
-          }
-
-          // Orientation covariance
-          if (sensors_[i].getOrientationCovariance())
-          {
-            for (unsigned j=0; j<realtime_pubs_[i]->msg_.orientation_covariance.size(); ++j){
-              realtime_pubs_[i]->msg_.orientation_covariance[j] = sensors_[i].getOrientationCovariance()[j];
+            // Orientation available
+            for (unsigned j = 0;
+                 j < realtime_pubs_[i]->msg_.orientation_covariance.size(); ++j)
+            {
+              realtime_pubs_[i]->msg_.orientation_covariance[j] = 0.0;
             }
           }
           else
           {
-            if (sensors_[i].getOrientation())
-            {
-              // Orientation available
-              for (unsigned j=0; j<realtime_pubs_[i]->msg_.orientation_covariance.size(); ++j){
-                realtime_pubs_[i]->msg_.orientation_covariance[j] = 0.0;
-              }
-            }
-            else
-            {
-              // No orientation available
-              realtime_pubs_[i]->msg_.orientation_covariance[0] = -1.0;
-            }
+            // No orientation available
+            realtime_pubs_[i]->msg_.orientation_covariance[0] = -1.0;
           }
+        }
 
-          // Angular velocity
+        // Angular velocity
+        if (sensors_[i].getAngularVelocity())
+        {
+          realtime_pubs_[i]->msg_.angular_velocity.x =
+              sensors_[i].getAngularVelocity()[0];
+          realtime_pubs_[i]->msg_.angular_velocity.y =
+              sensors_[i].getAngularVelocity()[1];
+          realtime_pubs_[i]->msg_.angular_velocity.z =
+              sensors_[i].getAngularVelocity()[2];
+        }
+
+        // Angular velocity covariance
+        if (sensors_[i].getAngularVelocityCovariance())
+        {
+          for (unsigned j = 0;
+               j < realtime_pubs_[i]->msg_.angular_velocity_covariance.size();
+               ++j)
+          {
+            realtime_pubs_[i]->msg_.angular_velocity_covariance[j] =
+                sensors_[i].getAngularVelocityCovariance()[j];
+          }
+        }
+        else
+        {
           if (sensors_[i].getAngularVelocity())
           {
-            realtime_pubs_[i]->msg_.angular_velocity.x = sensors_[i].getAngularVelocity()[0];
-            realtime_pubs_[i]->msg_.angular_velocity.y = sensors_[i].getAngularVelocity()[1];
-            realtime_pubs_[i]->msg_.angular_velocity.z = sensors_[i].getAngularVelocity()[2];
-          }
-
-          // Angular velocity covariance
-          if (sensors_[i].getAngularVelocityCovariance())
-          {
-            for (unsigned j=0; j<realtime_pubs_[i]->msg_.angular_velocity_covariance.size(); ++j){
-              realtime_pubs_[i]->msg_.angular_velocity_covariance[j] = sensors_[i].getAngularVelocityCovariance()[j];
+            // Angular velocity available
+            for (unsigned j = 0;
+                 j < realtime_pubs_[i]->msg_.angular_velocity_covariance.size();
+                 ++j)
+            {
+              realtime_pubs_[i]->msg_.angular_velocity_covariance[j] = 0.0;
             }
           }
           else
           {
-            if (sensors_[i].getAngularVelocity())
-            {
-              // Angular velocity available
-              for (unsigned j=0; j<realtime_pubs_[i]->msg_.angular_velocity_covariance.size(); ++j){
-                realtime_pubs_[i]->msg_.angular_velocity_covariance[j] = 0.0;
-              }
-            }
-            else
-            {
-              // No angular velocity available
-              realtime_pubs_[i]->msg_.angular_velocity_covariance[0] = -1.0;
-            }
+            // No angular velocity available
+            realtime_pubs_[i]->msg_.angular_velocity_covariance[0] = -1.0;
           }
+        }
 
-          // Linear acceleration
+        // Linear acceleration
+        if (sensors_[i].getLinearAcceleration())
+        {
+          realtime_pubs_[i]->msg_.linear_acceleration.x =
+              sensors_[i].getLinearAcceleration()[0];
+          realtime_pubs_[i]->msg_.linear_acceleration.y =
+              sensors_[i].getLinearAcceleration()[1];
+          realtime_pubs_[i]->msg_.linear_acceleration.z =
+              sensors_[i].getLinearAcceleration()[2];
+        }
+
+        // Linear acceleration covariance
+        if (sensors_[i].getLinearAccelerationCovariance())
+        {
+          for (unsigned j = 0;
+               j <
+               realtime_pubs_[i]->msg_.linear_acceleration_covariance.size();
+               ++j)
+          {
+            realtime_pubs_[i]->msg_.linear_acceleration_covariance[j] =
+                sensors_[i].getLinearAccelerationCovariance()[j];
+          }
+        }
+        else
+        {
           if (sensors_[i].getLinearAcceleration())
           {
-            realtime_pubs_[i]->msg_.linear_acceleration.x = sensors_[i].getLinearAcceleration()[0];
-            realtime_pubs_[i]->msg_.linear_acceleration.y = sensors_[i].getLinearAcceleration()[1];
-            realtime_pubs_[i]->msg_.linear_acceleration.z = sensors_[i].getLinearAcceleration()[2];
-          }
-
-          // Linear acceleration covariance
-          if (sensors_[i].getLinearAccelerationCovariance())
-          {
-            for (unsigned j=0; j<realtime_pubs_[i]->msg_.linear_acceleration_covariance.size(); ++j){
-              realtime_pubs_[i]->msg_.linear_acceleration_covariance[j] = sensors_[i].getLinearAccelerationCovariance()[j];
+            // Linear acceleration available
+            for (unsigned j = 0;
+                 j <
+                 realtime_pubs_[i]->msg_.linear_acceleration_covariance.size();
+                 ++j)
+            {
+              realtime_pubs_[i]->msg_.linear_acceleration_covariance[j] = 0.0;
             }
           }
           else
           {
-            if (sensors_[i].getLinearAcceleration())
-            {
-              // Linear acceleration available
-              for (unsigned j=0; j<realtime_pubs_[i]->msg_.linear_acceleration_covariance.size(); ++j){
-                realtime_pubs_[i]->msg_.linear_acceleration_covariance[j] = 0.0;
-              }
-            }
-            else
-            {
-              // No linear acceleration available
-              realtime_pubs_[i]->msg_.linear_acceleration_covariance[0] = -1.0;
-            }
+            // No linear acceleration available
+            realtime_pubs_[i]->msg_.linear_acceleration_covariance[0] = -1.0;
           }
-          
-          realtime_pubs_[i]->unlockAndPublish();
         }
+
+        realtime_pubs_[i]->unlockAndPublish();
       }
     }
   }
-
-  void ImuSensorController::stopping(const ros::Time& /*time*/)
-  {}
-
 }
 
-PLUGINLIB_EXPORT_CLASS(imu_sensor_controller::ImuSensorController, controller_interface::ControllerBase)
+void ImuSensorController::stopping(const ros::Time& /*time*/)
+{
+}
+
+}  // namespace imu_sensor_controller
+
+PLUGINLIB_EXPORT_CLASS(imu_sensor_controller::ImuSensorController,
+                       controller_interface::ControllerBase)

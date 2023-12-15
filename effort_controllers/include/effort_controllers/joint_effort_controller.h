@@ -36,12 +36,10 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_command_controller.h>
 
 namespace effort_controllers
 {
-
 /**
  * \brief Joint Effort Controller (torque or force)
  *
@@ -55,6 +53,7 @@ namespace effort_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64) : The joint effort to apply.
  */
-typedef forward_command_controller::ForwardCommandController<hardware_interface::EffortJointInterface>
-        JointEffortController;
-}
+typedef forward_command_controller::ForwardCommandController<
+    hardware_interface::EffortJointInterface>
+    JointEffortController;
+}  // namespace effort_controllers

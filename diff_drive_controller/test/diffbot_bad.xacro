@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
 <robot name="robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
-<!--
+  <!--
 Robot model taken from http://wiki.ros.org/pr2_mechanism/Tutorials/SImple%20URDF-Controller%20Example
 -->
   <!-- Constants for robot dimensions -->
   <xacro:property name="PI" value="3.1415926535897931"/>
-  <xacro:property name="width" value="0.5" /> <!-- Square dimensions (widthxwidth) of beams -->
-  <xacro:property name="wheel_radius" value="0.11" /> <!-- Link 1 -->
-  <xacro:property name="thickness" value="0.086" /> <!-- Link 2 -->
-  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+  <xacro:property name="width" value="0.5" />
+  <!-- Square dimensions (widthxwidth) of beams -->
+  <xacro:property name="wheel_radius" value="0.11" />
+  <!-- Link 1 -->
+  <xacro:property name="thickness" value="0.086" />
+  <!-- Link 2 -->
+  <xacro:property name="axel_offset" value="0.05" />
+  <!-- Space btw top of beam and the each joint -->
 
   <!-- Links: inertial,visual,collision -->
   <link name="base_link">

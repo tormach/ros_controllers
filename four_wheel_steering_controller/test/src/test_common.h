@@ -29,7 +29,6 @@
 
 #pragma once
 
-
 #include <cmath>
 
 #include <gtest/gtest.h>
@@ -45,23 +44,24 @@
 
 // Floating-point value comparison threshold
 const double EPS = 0.01;
-const double POSITION_TOLERANCE = 0.02; // 2 cm-s precision
-const double VELOCITY_TOLERANCE = 0.02; // 2 cm-s-1 precision
-const double JERK_LINEAR_VELOCITY_TOLERANCE = 0.10; // 10 cm-s-1 precision
-const double JERK_ANGULAR_VELOCITY_TOLERANCE = 0.05; // 3 deg-s-1 precision
-const double ORIENTATION_TOLERANCE = 0.08; // 4.58 degree precision
+const double POSITION_TOLERANCE = 0.02;               // 2 cm-s precision
+const double VELOCITY_TOLERANCE = 0.02;               // 2 cm-s-1 precision
+const double JERK_LINEAR_VELOCITY_TOLERANCE = 0.10;   // 10 cm-s-1 precision
+const double JERK_ANGULAR_VELOCITY_TOLERANCE = 0.05;  // 3 deg-s-1 precision
+const double ORIENTATION_TOLERANCE = 0.08;            // 4.58 degree precision
 
 class FourWheelSteeringControllerTest : public ::testing::Test
 {
 public:
-
   FourWheelSteeringControllerTest()
-  : received_first_odom(false)
-  , cmd_twist_pub(nh.advertise<geometry_msgs::Twist>("cmd_vel", 100))
-  , cmd_4ws_pub(nh.advertise<four_wheel_steering_msgs::FourWheelSteering>("cmd_four_wheel_steering", 100))
-  , odom_sub(nh.subscribe("odom", 100, &FourWheelSteeringControllerTest::odomCallback, this))
-  , start_srv(nh.serviceClient<std_srvs::Empty>("start"))
-  , stop_srv(nh.serviceClient<std_srvs::Empty>("stop"))
+    : received_first_odom(false)
+    , cmd_twist_pub(nh.advertise<geometry_msgs::Twist>("cmd_vel", 100))
+    , cmd_4ws_pub(nh.advertise<four_wheel_steering_msgs::FourWheelSteering>(
+          "cmd_four_wheel_steering", 100))
+    , odom_sub(nh.subscribe(
+          "odom", 100, &FourWheelSteeringControllerTest::odomCallback, this))
+    , start_srv(nh.serviceClient<std_srvs::Empty>("start"))
+    , stop_srv(nh.serviceClient<std_srvs::Empty>("stop"))
   {
   }
 
@@ -70,7 +70,10 @@ public:
     odom_sub.shutdown();
   }
 
-  nav_msgs::Odometry getLastOdom(){ return last_odom; }
+  nav_msgs::Odometry getLastOdom()
+  {
+    return last_odom;
+  }
   void publish(geometry_msgs::Twist cmd_vel)
   {
     cmd_twist_pub.publish(cmd_vel);
@@ -79,17 +82,32 @@ public:
   {
     cmd_4ws_pub.publish(cmd_vel);
   }
-  bool isControllerAlive()const{ return (odom_sub.getNumPublishers() > 0)
-        && ((cmd_twist_pub.getNumSubscribers() > 0) || (cmd_4ws_pub.getNumSubscribers() > 0)); }
+  bool isControllerAlive() const
+  {
+    return (odom_sub.getNumPublishers() > 0) &&
+           ((cmd_twist_pub.getNumSubscribers() > 0) ||
+            (cmd_4ws_pub.getNumSubscribers() > 0));
+  }
 
-  bool hasReceivedFirstOdom()const{ return received_first_odom; }
+  bool hasReceivedFirstOdom() const
+  {
+    return received_first_odom;
+  }
 
-  void start(){ std_srvs::Empty srv; start_srv.call(srv); }
-  void stop(){ std_srvs::Empty srv; stop_srv.call(srv); }
+  void start()
+  {
+    std_srvs::Empty srv;
+    start_srv.call(srv);
+  }
+  void stop()
+  {
+    std_srvs::Empty srv;
+    stop_srv.call(srv);
+  }
 
   void waitForController() const
   {
-    while(!isControllerAlive() && ros::ok())
+    while (!isControllerAlive() && ros::ok())
     {
       ROS_DEBUG_STREAM_THROTTLE(0.5, "Waiting for controller.");
       ros::Duration(0.1).sleep();
@@ -100,9 +118,10 @@ public:
 
   void waitForOdomMsgs() const
   {
-    while(!hasReceivedFirstOdom() && ros::ok())
+    while (!hasReceivedFirstOdom() && ros::ok())
     {
-      ROS_DEBUG_STREAM_THROTTLE(0.5, "Waiting for odom messages to be published.");
+      ROS_DEBUG_STREAM_THROTTLE(0.5, "Waiting for odom messages to be "
+                                     "published.");
       ros::Duration(0.01).sleep();
     }
     if (!ros::ok())
@@ -121,10 +140,11 @@ private:
 
   void odomCallback(const nav_msgs::Odometry& odom)
   {
-    ROS_INFO_STREAM("Callback reveived: pos.x: " << odom.pose.pose.position.x
-                     << ", orient.z: " << odom.pose.pose.orientation.z
-                     << ", lin_est: " << odom.twist.twist.linear.x
-                     << ", ang_est: " << odom.twist.twist.angular.z);
+    ROS_INFO_STREAM("Callback reveived: pos.x: "
+                    << odom.pose.pose.position.x
+                    << ", orient.z: " << odom.pose.pose.orientation.z
+                    << ", lin_est: " << odom.twist.twist.linear.x
+                    << ", ang_est: " << odom.twist.twist.angular.z);
     last_odom = odom;
     received_first_odom = true;
   }

@@ -35,7 +35,6 @@
 
 #pragma once
 
-
 /**
    @class effort_controllers::JointVelocityController
    @brief Joint Velocity Controller
@@ -46,7 +45,8 @@
 
    @param type Must be "effort_controllers::JointVelocityController"
    @param joint Name of the joint to control.
-   @param pid Contains the gains for the PID loop around velocity.  See: control_toolbox::Pid
+   @param pid Contains the gains for the PID loop around velocity.  See:
+   control_toolbox::Pid
 
    Subscribes to:
 
@@ -70,15 +70,15 @@
 
 namespace effort_controllers
 {
-
-class JointVelocityController: public controller_interface::Controller<hardware_interface::EffortJointInterface>
+class JointVelocityController : public controller_interface::Controller<
+                                    hardware_interface::EffortJointInterface>
 {
 public:
-
   JointVelocityController();
   ~JointVelocityController();
 
-  bool init(hardware_interface::EffortJointInterface *robot, const std::string &joint_name, const control_toolbox::Pid &pid);
+  bool init(hardware_interface::EffortJointInterface* robot,
+            const std::string& joint_name, const control_toolbox::Pid& pid);
 
   /** \brief The init function is called to initialize the controller from a
    * non-realtime thread with a pointer to the hardware interface, itself,
@@ -93,19 +93,22 @@ public:
    * \returns True if initialization was successful and the controller
    * is ready to be started.
    */
-  bool init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n);
+  bool init(hardware_interface::EffortJointInterface* robot,
+            ros::NodeHandle& n);
 
   /*!
-   * \brief Give set velocity of the joint for next update: revolute (angle) and prismatic (velocity)
+   * \brief Give set velocity of the joint for next update: revolute (angle) and
+   * prismatic (velocity)
    *
    * \param double pos Velocity command to issue
    */
   void setCommand(double cmd);
 
   /*!
-   * \brief Get latest velocity command to the joint: revolute (angle) and prismatic (velocity).
+   * \brief Get latest velocity command to the joint: revolute (angle) and
+   * prismatic (velocity).
    */
-  void getCommand(double & cmd);
+  void getCommand(double& cmd);
 
   /** \brief This is called from within the realtime thread just before the
    * first call to \ref update
@@ -122,12 +125,13 @@ public:
   /**
    * \brief Get the PID parameters
    */
-  void getGains(double &p, double &i, double &d, double &i_max, double &i_min);
+  void getGains(double& p, double& i, double& d, double& i_max, double& i_min);
 
   /**
    * \brief Get the PID parameters
    */
-  void getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup);
+  void getGains(double& p, double& i, double& d, double& i_max, double& i_min,
+                bool& antiwindup);
 
   /**
    * \brief Print debug info to console
@@ -137,7 +141,9 @@ public:
   /**
    * \brief Set the PID parameters
    */
-  void setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup = false);
+  void setGains(const double& p, const double& i, const double& d,
+                const double& i_max, const double& i_min,
+                const bool& antiwindup = false);
 
   /**
    * \brief Get the name of the joint this controller uses
@@ -145,15 +151,15 @@ public:
   std::string getJointName();
 
   hardware_interface::JointHandle joint_;
-  double command_;                                /**< Last commanded velocity. */
+  double command_; /**< Last commanded velocity. */
 
 private:
   int loop_count_;
-  control_toolbox::Pid pid_controller_;           /**< Internal PID controller. */
+  control_toolbox::Pid pid_controller_; /**< Internal PID controller. */
 
   std::unique_ptr<
-    realtime_tools::RealtimePublisher<
-      control_msgs::JointControllerState> > controller_state_publisher_ ;
+      realtime_tools::RealtimePublisher<control_msgs::JointControllerState> >
+      controller_state_publisher_;
 
   ros::Subscriber sub_command_;
 
@@ -163,4 +169,4 @@ private:
   void setCommandCB(const std_msgs::Float64ConstPtr& msg);
 };
 
-} // namespace
+}  // namespace effort_controllers

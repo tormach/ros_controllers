@@ -37,7 +37,7 @@
 TEST_F(AckermannSteeringControllerTest, testNaN)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }

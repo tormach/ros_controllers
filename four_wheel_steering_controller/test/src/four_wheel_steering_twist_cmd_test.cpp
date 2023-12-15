@@ -24,22 +24,29 @@ TEST_F(FourWheelSteeringControllerTest, testForward)
 
   nav_msgs::Odometry new_odom = getLastOdom();
 
-  const ros::Duration actual_elapsed_time = new_odom.header.stamp - old_odom.header.stamp;
+  const ros::Duration actual_elapsed_time =
+      new_odom.header.stamp - old_odom.header.stamp;
 
-  const double expected_distance = cmd_vel.linear.x * actual_elapsed_time.toSec();
+  const double expected_distance =
+      cmd_vel.linear.x * actual_elapsed_time.toSec();
 
   // check if the robot traveled 1 meter in XY plane, changes in z should be ~~0
-  const double dx = new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
-  const double dy = new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
-  const double dz = new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
-  EXPECT_NEAR(sqrt(dx*dx + dy*dy), expected_distance, POSITION_TOLERANCE);
+  const double dx =
+      new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
+  const double dy =
+      new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
+  const double dz =
+      new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
+  EXPECT_NEAR(sqrt(dx * dx + dy * dy), expected_distance, POSITION_TOLERANCE);
   EXPECT_LT(fabs(dz), EPS);
 
   // convert to rpy and test that way
   double roll_old, pitch_old, yaw_old;
   double roll_new, pitch_new, yaw_new;
-  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation)).getRPY(roll_old, pitch_old, yaw_old);
-  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation)).getRPY(roll_new, pitch_new, yaw_new);
+  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation))
+      .getRPY(roll_old, pitch_old, yaw_old);
+  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation))
+      .getRPY(roll_new, pitch_new, yaw_new);
   EXPECT_LT(fabs(roll_new - roll_old), EPS);
   EXPECT_LT(fabs(pitch_new - pitch_old), EPS);
   EXPECT_LT(fabs(yaw_new - yaw_old), EPS);
@@ -66,26 +73,33 @@ TEST_F(FourWheelSteeringControllerTest, testTurn)
   // get initial odom
   nav_msgs::Odometry old_odom = getLastOdom();
   // send a velocity command
-  cmd_vel.linear.x = M_PI/2.0;
-  cmd_vel.angular.z = M_PI/10.0;
+  cmd_vel.linear.x = M_PI / 2.0;
+  cmd_vel.angular.z = M_PI / 10.0;
   publish(cmd_vel);
   // wait for 10s to make a half turn
   ros::Duration(10.0).sleep();
 
   nav_msgs::Odometry new_odom = getLastOdom();
 
-  // check if the robot traveled 20 meter in XY plane, changes in z should be ~~0
-  const double dx = new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
-  const double dy = new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
-  const double dz = new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
-  EXPECT_NEAR(sqrt(dx*dx + dy*dy), 2*cmd_vel.linear.x/cmd_vel.angular.z, POSITION_TOLERANCE);
+  // check if the robot traveled 20 meter in XY plane, changes in z should be
+  // ~~0
+  const double dx =
+      new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
+  const double dy =
+      new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
+  const double dz =
+      new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
+  EXPECT_NEAR(sqrt(dx * dx + dy * dy), 2 * cmd_vel.linear.x / cmd_vel.angular.z,
+              POSITION_TOLERANCE);
   EXPECT_LT(fabs(dz), EPS);
 
   // convert to rpy and test that way
   double roll_old, pitch_old, yaw_old;
   double roll_new, pitch_new, yaw_new;
-  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation)).getRPY(roll_old, pitch_old, yaw_old);
-  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation)).getRPY(roll_new, pitch_new, yaw_new);
+  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation))
+      .getRPY(roll_old, pitch_old, yaw_old);
+  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation))
+      .getRPY(roll_new, pitch_new, yaw_new);
   EXPECT_LT(fabs(roll_new - roll_old), EPS);
   EXPECT_LT(fabs(pitch_new - pitch_old), EPS);
   EXPECT_NEAR(fabs(yaw_new - yaw_old), M_PI, ORIENTATION_TOLERANCE);
@@ -118,7 +132,7 @@ int main(int argc, char** argv)
 
   ros::AsyncSpinner spinner(1);
   spinner.start();
-  //ros::Duration(0.5).sleep();
+  // ros::Duration(0.5).sleep();
   int ret = RUN_ALL_TESTS();
   spinner.stop();
   ros::shutdown();

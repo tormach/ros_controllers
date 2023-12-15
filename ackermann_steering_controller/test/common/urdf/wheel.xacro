@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:property name="steer_radius" value="0.05" /> <!-- Link 1 -->
-  <xacro:property name="steer_thickness" value="0.02" /> <!-- Link 1 -->
+  <xacro:property name="steer_radius" value="0.05" />
+  <!-- Link 1 -->
+  <xacro:property name="steer_thickness" value="0.02" />
+  <!-- Link 1 -->
   <xacro:property name="steer_effort"   value="10.0"/>
   <xacro:property name="steer_velocity" value="5.0"/>
 
@@ -34,7 +36,7 @@
       <limit effort="${steer_effort}"
              lower="${-180.0 * deg_to_rad}" upper="${180.0 * deg_to_rad}"
              velocity="${steer_velocity}"/>
-     </joint>
+    </joint>
 
     <gazebo reference="${name}_steer_link">
       <material>Gazebo/Yellow</material>
@@ -71,7 +73,7 @@
       <limit effort="${steer_effort}"
              lower="${-180.0 * deg_to_rad}" upper="${180.0 * deg_to_rad}"
              velocity="${steer_velocity}"/>
-     </joint>
+    </joint>
 
     <link name="${name}_wheel_link">
       <inertial>

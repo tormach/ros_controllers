@@ -42,7 +42,6 @@
 
 #pragma once
 
-
 /**
    @class velocity_controllers::JointPositionController
    @brief Joint Position Controller
@@ -53,7 +52,8 @@
 
    @param type Must be "velocity_controllers::JointPositionController"
    @param joint Name of the joint to control.
-   @param pid Contains the gains for the PID loop around position.  See: control_toolbox::Pid
+   @param pid Contains the gains for the PID loop around position.  See:
+   control_toolbox::Pid
 
    Subscribes to:
 
@@ -80,19 +80,19 @@
 
 namespace velocity_controllers
 {
-
-class JointPositionController: public controller_interface::Controller<hardware_interface::VelocityJointInterface>
+class JointPositionController : public controller_interface::Controller<
+                                    hardware_interface::VelocityJointInterface>
 {
 public:
-
   /**
-   * \brief Store position and velocity command in struct to allow easier realtime buffer usage
+   * \brief Store position and velocity command in struct to allow easier
+   * realtime buffer usage
    */
   struct Commands
   {
-    double position_; // Last commanded position
-    double velocity_; // Last commanded velocity
-    bool has_velocity_; // false if no velocity command has been specified
+    double position_;    // Last commanded position
+    double velocity_;    // Last commanded velocity
+    bool has_velocity_;  // false if no velocity command has been specified
   };
 
   JointPositionController();
@@ -111,18 +111,20 @@ public:
    * \returns True if initialization was successful and the controller
    * is ready to be started.
    */
-  bool init(hardware_interface::VelocityJointInterface *robot, ros::NodeHandle &n);
+  bool init(hardware_interface::VelocityJointInterface* robot,
+            ros::NodeHandle& n);
 
   /*!
-   * \brief Give set position of the joint for next update: revolute (angle) and prismatic (position)
+   * \brief Give set position of the joint for next update: revolute (angle) and
+   * prismatic (position)
    *
    * \param command
    */
   void setCommand(double pos_target);
 
   /*!
-   * \brief Give set position of the joint for next update: revolute (angle) and prismatic (position)
-   *        Also supports a target velocity
+   * \brief Give set position of the joint for next update: revolute (angle) and
+   * prismatic (position) Also supports a target velocity
    *
    * \param pos_target - position setpoint
    * \param vel_target - velocity setpoint
@@ -144,12 +146,13 @@ public:
   /**
    * \brief Get the PID parameters
    */
-  void getGains(double &p, double &i, double &d, double &i_max, double &i_min);
+  void getGains(double& p, double& i, double& d, double& i_max, double& i_min);
 
   /**
    * \brief Get the PID parameters
    */
-  void getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup);
+  void getGains(double& p, double& i, double& d, double& i_max, double& i_min,
+                bool& antiwindup);
 
   /**
    * \brief Print debug info to console
@@ -159,7 +162,9 @@ public:
   /**
    * \brief Get the PID parameters
    */
-  void setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup = false);
+  void setGains(const double& p, const double& i, const double& d,
+                const double& i_max, const double& i_min,
+                const bool& antiwindup = false);
 
   /**
    * \brief Get the name of the joint this controller uses
@@ -175,15 +180,16 @@ public:
   hardware_interface::JointHandle joint_;
   urdf::JointConstSharedPtr joint_urdf_;
   realtime_tools::RealtimeBuffer<Commands> command_;
-  Commands command_struct_; // pre-allocated memory that is re-used to set the realtime buffer
+  Commands command_struct_;  // pre-allocated memory that is re-used to set the
+                             // realtime buffer
 
 private:
   int loop_count_;
-  control_toolbox::Pid pid_controller_;       /**< Internal PID controller. */
+  control_toolbox::Pid pid_controller_; /**< Internal PID controller. */
 
   std::unique_ptr<
-    realtime_tools::RealtimePublisher<
-      control_msgs::JointControllerState> > controller_state_publisher_ ;
+      realtime_tools::RealtimePublisher<control_msgs::JointControllerState> >
+      controller_state_publisher_;
 
   ros::Subscriber sub_command_;
 
@@ -193,12 +199,11 @@ private:
   void setCommandCB(const std_msgs::Float64ConstPtr& msg);
 
   /**
-   * \brief Check that the command is within the hard limits of the joint. Checks for joint
-   *        type first. Sets command to limit if out of bounds.
-   * \param command - the input to test
+   * \brief Check that the command is within the hard limits of the joint.
+   * Checks for joint type first. Sets command to limit if out of bounds. \param
+   * command - the input to test
    */
-  void enforceJointLimits(double &command);
-
+  void enforceJointLimits(double& command);
 };
 
-} // namespace
+}  // namespace velocity_controllers

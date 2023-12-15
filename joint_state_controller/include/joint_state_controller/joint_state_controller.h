@@ -31,7 +31,6 @@
 
 #pragma once
 
-
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <memory>
@@ -40,12 +39,13 @@
 
 namespace joint_state_controller
 {
-
 /**
  * \brief Controller that publishes the state of all joints in a robot.
  *
- * This controller publishes the state of all resources registered to a \c hardware_interface::JointStateInterface to a
- * topic of type \c sensor_msgs/JointState. The following is a basic configuration of the controller.
+ * This controller publishes the state of all resources registered to a \c
+ * hardware_interface::JointStateInterface to a topic of type \c
+ * sensor_msgs/JointState. The following is a basic configuration of the
+ * controller.
  *
  * \code
  * joint_state_controller:
@@ -54,8 +54,8 @@ namespace joint_state_controller
  * \endcode
  *
  * It's possible to optionally specify a set of extra joints not contained in a
- * \c hardware_interface::JointStateInterface with custom (and static) default values. The following is an example
- *  configuration specifying extra joints.
+ * \c hardware_interface::JointStateInterface with custom (and static) default
+ * values. The following is an example configuration specifying extra joints.
  *
  * \code
  * joint_state_controller:
@@ -75,26 +75,30 @@ namespace joint_state_controller
  *
  * An unspecified position, velocity or acceleration defaults to zero.
  */
-class JointStateController: public controller_interface::Controller<hardware_interface::JointStateInterface>
+class JointStateController : public controller_interface::Controller<
+                                 hardware_interface::JointStateInterface>
 {
 public:
-  JointStateController() : publish_rate_(0.0) {}
+  JointStateController() : publish_rate_(0.0)
+  {
+  }
 
   virtual bool init(hardware_interface::JointStateInterface* hw,
-                    ros::NodeHandle&                         root_nh,
-                    ros::NodeHandle&                         controller_nh);
+                    ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   virtual void starting(const ros::Time& time);
   virtual void update(const ros::Time& time, const ros::Duration& /*period*/);
   virtual void stopping(const ros::Time& /*time*/);
 
 private:
   std::vector<hardware_interface::JointStateHandle> joint_state_;
-  std::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> > realtime_pub_;
+  std::shared_ptr<realtime_tools::RealtimePublisher<sensor_msgs::JointState> >
+      realtime_pub_;
   ros::Time last_publish_time_;
   double publish_rate_;
-  unsigned int num_hw_joints_; ///< Number of joints present in the JointStateInterface, excluding extra joints
+  unsigned int num_hw_joints_;  ///< Number of joints present in the
+                                ///< JointStateInterface, excluding extra joints
 
   void addExtraJoints(const ros::NodeHandle& nh, sensor_msgs::JointState& msg);
 };
 
-}
+}  // namespace joint_state_controller

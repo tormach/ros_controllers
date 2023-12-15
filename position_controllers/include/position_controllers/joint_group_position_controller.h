@@ -37,15 +37,14 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_joint_group_command_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 
 namespace position_controllers
 {
-
 /**
- * \brief Forward command controller for a set of position controlled joints (linear or angular).
+ * \brief Forward command controller for a set of position controlled joints
+ * (linear or angular).
  *
  * This class forwards the commanded positions down to a set of joints.
  *
@@ -57,6 +56,7 @@ namespace position_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64MultiArray) : The joint positions to apply
  */
-typedef forward_command_controller::ForwardJointGroupCommandController<hardware_interface::PositionJointInterface>
-        JointGroupPositionController;
-}
+typedef forward_command_controller::ForwardJointGroupCommandController<
+    hardware_interface::PositionJointInterface>
+    JointGroupPositionController;
+}  // namespace position_controllers

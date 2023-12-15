@@ -37,22 +37,27 @@ TEST_F(DiffDriveControllerTest, breakWithMultiplePublishers)
   waitForOdomMsgs();
 
   nav_msgs::Odometry old_odom = getLastOdom();
-  //TODO: we should be programatically publish from 2 different nodes
+  // TODO: we should be programatically publish from 2 different nodes
   // not the current hacky solution with the launch files
-  ros::Duration(1.0).sleep(); 
+  ros::Duration(1.0).sleep();
   nav_msgs::Odometry new_odom = getLastOdom();
 
-  const double dx = new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
-  const double dy = new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
-  const double dz = new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
-  EXPECT_NEAR(sqrt(dx*dx + dy*dy), 0.0, POSITION_TOLERANCE);
+  const double dx =
+      new_odom.pose.pose.position.x - old_odom.pose.pose.position.x;
+  const double dy =
+      new_odom.pose.pose.position.y - old_odom.pose.pose.position.y;
+  const double dz =
+      new_odom.pose.pose.position.z - old_odom.pose.pose.position.z;
+  EXPECT_NEAR(sqrt(dx * dx + dy * dy), 0.0, POSITION_TOLERANCE);
   EXPECT_LT(fabs(dz), EPS);
 
   // convert to rpy and test that way
   double roll_old, pitch_old, yaw_old;
   double roll_new, pitch_new, yaw_new;
-  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation)).getRPY(roll_old, pitch_old, yaw_old);
-  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation)).getRPY(roll_new, pitch_new, yaw_new);
+  tf::Matrix3x3(tfQuatFromGeomQuat(old_odom.pose.pose.orientation))
+      .getRPY(roll_old, pitch_old, yaw_old);
+  tf::Matrix3x3(tfQuatFromGeomQuat(new_odom.pose.pose.orientation))
+      .getRPY(roll_new, pitch_new, yaw_new);
   EXPECT_LT(fabs(roll_new - roll_old), EPS);
   EXPECT_LT(fabs(pitch_new - pitch_old), EPS);
   EXPECT_LT(fabs(yaw_new - yaw_old), EPS);

@@ -36,23 +36,20 @@
 
 #pragma once
 
-
 #include <ros/node_handle.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <controller_interface/controller.h>
 #include <std_msgs/Float64.h>
 #include <realtime_tools/realtime_buffer.h>
 
-
 namespace forward_command_controller
 {
-
 /**
  * \brief Single joint controller.
  *
  * This class passes the command signal down to the joint.
- * Command signal and joint hardware interface are of the same type, e.g. effort commands for an effort-controlled
- * joint.
+ * Command signal and joint hardware interface are of the same type, e.g. effort
+ * commands for an effort-controlled joint.
  *
  * \tparam T Type implementing the JointCommandInterface.
  *
@@ -65,13 +62,18 @@ namespace forward_command_controller
  * - \b command (std_msgs::Float64) : The joint command to apply.
  */
 template <class T>
-class ForwardCommandController: public controller_interface::Controller<T>
+class ForwardCommandController : public controller_interface::Controller<T>
 {
 public:
-  ForwardCommandController() {}
-  ~ForwardCommandController() {sub_command_.shutdown();}
+  ForwardCommandController()
+  {
+  }
+  ~ForwardCommandController()
+  {
+    sub_command_.shutdown();
+  }
 
-  bool init(T* hw, ros::NodeHandle &n)
+  bool init(T* hw, ros::NodeHandle& n)
   {
     std::string joint_name;
     if (!n.getParam("joint", joint_name))
@@ -80,19 +82,26 @@ public:
       return false;
     }
     joint_ = hw->getHandle(joint_name);
-    sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &ForwardCommandController::commandCB, this);
+    sub_command_ = n.subscribe<std_msgs::Float64>(
+        "command", 1, &ForwardCommandController::commandCB, this);
     return true;
   }
 
   void starting(const ros::Time& time);
-  void update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {joint_.setCommand(*command_buffer_.readFromRT());}
+  void update(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+  {
+    joint_.setCommand(*command_buffer_.readFromRT());
+  }
 
   hardware_interface::JointHandle joint_;
   realtime_tools::RealtimeBuffer<double> command_buffer_;
 
 private:
   ros::Subscriber sub_command_;
-  void commandCB(const std_msgs::Float64ConstPtr& msg) {command_buffer_.writeFromNonRT(msg->data);}
+  void commandCB(const std_msgs::Float64ConstPtr& msg)
+  {
+    command_buffer_.writeFromNonRT(msg->data);
+  }
 };
 
-}
+}  // namespace forward_command_controller

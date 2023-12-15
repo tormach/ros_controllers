@@ -44,7 +44,6 @@
 
 namespace joint_trajectory_controller
 {
-
 /**
  * @brief Base class for classes used to construct diffent trajectory types.
  *
@@ -57,10 +56,11 @@ namespace joint_trajectory_controller
  * builder.buildTrajectory(trajectory);
  * @endcode
  *
- * Setting a start time is mandatory whereas setting a goal handle can be omitted.
- * Also note that \p trajectory has to reference a valid trajectory (see isTrajectoryValid()).
+ * Setting a start time is mandatory whereas setting a goal handle can be
+ * omitted. Also note that \p trajectory has to reference a valid trajectory
+ * (see isTrajectoryValid()).
  */
-template<class SegmentImpl>
+template <class SegmentImpl>
 class TrajectoryBuilder
 {
 public:
@@ -70,11 +70,12 @@ public:
   virtual ~TrajectoryBuilder<SegmentImpl>() = default;
 
 private:
-  using Segment               = JointTrajectorySegment<SegmentImpl>;
-  using TrajectoryPerJoint    = std::vector<Segment>;
-  using Trajectory            = std::vector<TrajectoryPerJoint>;
+  using Segment = JointTrajectorySegment<SegmentImpl>;
+  using TrajectoryPerJoint = std::vector<Segment>;
+  using Trajectory = std::vector<TrajectoryPerJoint>;
 
-  using RealtimeGoalHandle    = realtime_tools::RealtimeServerGoalHandle<control_msgs::FollowJointTrajectoryAction>;
+  using RealtimeGoalHandle = realtime_tools::RealtimeServerGoalHandle<
+      control_msgs::FollowJointTrajectoryAction>;
   using RealtimeGoalHandlePtr = boost::shared_ptr<RealtimeGoalHandle>;
 
 public:
@@ -83,14 +84,17 @@ public:
    *
    * The start time is reset by reset().
    */
-  TrajectoryBuilder<SegmentImpl>* setStartTime(const typename Segment::Time& start_time);
+  TrajectoryBuilder<SegmentImpl>*
+  setStartTime(const typename Segment::Time& start_time);
 
   /**
-   * @brief Set the goal handle that will be attached to the trajectory segments.
+   * @brief Set the goal handle that will be attached to the trajectory
+   * segments.
    *
    * The goal handle is reset by reset().
    */
-  TrajectoryBuilder<SegmentImpl>* setGoalHandle(RealtimeGoalHandlePtr& goal_handle);
+  TrajectoryBuilder<SegmentImpl>*
+  setGoalHandle(RealtimeGoalHandlePtr& goal_handle);
 
 public:
   /**
@@ -109,7 +113,8 @@ public:
   virtual bool buildTrajectory(Trajectory* trajectory) = 0;
 
 protected:
-  //! @brief Return the set goal handle or a default one, if no goal handle was set.
+  //! @brief Return the set goal handle or a default one, if no goal handle was
+  //! set.
   RealtimeGoalHandlePtr createGoalHandlePtr() const;
   //! @brief Return the set start time.
   const boost::optional<typename Segment::Time>& getStartTime() const;
@@ -120,64 +125,73 @@ protected:
   /**
    * @brief Check if the elements of a given trajectory are sized properly.
    * @param trajectory
-   * @param expected_number_of_joints The count of TrajectoryPerJoint in \p trajectory has to match the number of joints.
-   * @param expected_number_of_segments Each TrajectoryPerJoint in \p trajectory has to contain this number of segments.
+   * @param expected_number_of_joints The count of TrajectoryPerJoint in \p
+   * trajectory has to match the number of joints.
+   * @param expected_number_of_segments Each TrajectoryPerJoint in \p trajectory
+   * has to contain this number of segments.
    */
   static bool isTrajectoryValid(const Trajectory* trajectory,
                                 const unsigned int expected_number_of_joints,
                                 const unsigned int expected_number_of_segments);
 
 private:
-  boost::optional<typename Segment::Time> start_time_   {boost::none};
+  boost::optional<typename Segment::Time> start_time_{ boost::none };
   // We do not want to participate in the life time management of the
   // goal handle, therefore, only a reference is stored.
-  boost::optional<RealtimeGoalHandlePtr&> goal_handle_  {boost::none};
-
+  boost::optional<RealtimeGoalHandlePtr&> goal_handle_{ boost::none };
 };
 
-template<class SegmentImpl>
-inline TrajectoryBuilder<SegmentImpl>* TrajectoryBuilder<SegmentImpl>::setStartTime(const typename TrajectoryBuilder<SegmentImpl>::Segment::Time& start_time)
+template <class SegmentImpl>
+inline TrajectoryBuilder<SegmentImpl>*
+TrajectoryBuilder<SegmentImpl>::setStartTime(
+    const typename TrajectoryBuilder<SegmentImpl>::Segment::Time& start_time)
 {
   start_time_ = start_time;
   return this;
 }
 
-template<class SegmentImpl>
-inline const boost::optional<typename TrajectoryBuilder<SegmentImpl>::Segment::Time>& TrajectoryBuilder<SegmentImpl>::getStartTime() const
+template <class SegmentImpl>
+inline const boost::optional<
+    typename TrajectoryBuilder<SegmentImpl>::Segment::Time>&
+TrajectoryBuilder<SegmentImpl>::getStartTime() const
 {
   return start_time_;
 }
 
-template<class SegmentImpl>
-inline TrajectoryBuilder<SegmentImpl>* TrajectoryBuilder<SegmentImpl>::setGoalHandle(TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr& goal_handle)
+template <class SegmentImpl>
+inline TrajectoryBuilder<SegmentImpl>*
+TrajectoryBuilder<SegmentImpl>::setGoalHandle(
+    TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr& goal_handle)
 {
   goal_handle_ = goal_handle;
   return this;
 }
 
-template<class SegmentImpl>
-inline typename TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr TrajectoryBuilder<SegmentImpl>::createGoalHandlePtr() const
+template <class SegmentImpl>
+inline typename TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr
+TrajectoryBuilder<SegmentImpl>::createGoalHandlePtr() const
 {
   return goal_handle_ ? goal_handle_.value() : createDefaultGoalHandle();
 }
 
-template<class SegmentImpl>
-inline typename TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr TrajectoryBuilder<SegmentImpl>::createDefaultGoalHandle()
+template <class SegmentImpl>
+inline typename TrajectoryBuilder<SegmentImpl>::RealtimeGoalHandlePtr
+TrajectoryBuilder<SegmentImpl>::createDefaultGoalHandle()
 {
   return RealtimeGoalHandlePtr();
 }
 
-template<class SegmentImpl>
+template <class SegmentImpl>
 inline void TrajectoryBuilder<SegmentImpl>::reset()
 {
   start_time_ = boost::none;
   goal_handle_ = boost::none;
 }
 
-template<class SegmentImpl>
-bool TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(const Trajectory* trajectory,
-                                                       const unsigned int expected_number_of_joints,
-                                                       const unsigned int expected_number_of_segments)
+template <class SegmentImpl>
+bool TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(
+    const Trajectory* trajectory, const unsigned int expected_number_of_joints,
+    const unsigned int expected_number_of_segments)
 {
   if (trajectory->size() != expected_number_of_joints)
   {
@@ -193,6 +207,6 @@ bool TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(const Trajectory* traject
   return true;
 }
 
-}
+}  // namespace joint_trajectory_controller
 
-#endif // TRAJECTORY_BUILDER_H
+#endif  // TRAJECTORY_BUILDER_H

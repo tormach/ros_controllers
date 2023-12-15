@@ -43,27 +43,31 @@ class JointStateControllerTest : public ::testing::Test
 {
 public:
   JointStateControllerTest()
-    : root_nh_(ros::NodeHandle()),
-      controller_nh_("test_ok/joint_state_controller")
+    : root_nh_(ros::NodeHandle())
+    , controller_nh_("test_ok/joint_state_controller")
   {
     // Intialize raw joint state data
-    names_.push_back("joint1"); names_.push_back("joint2");
-    pos_[0] = 0.0; pos_[1] = 0.0;
-    vel_[0] = 0.0; vel_[1] = 0.0;
-    eff_[0] = 0.0; eff_[1] = 0.0;
+    names_.push_back("joint1");
+    names_.push_back("joint2");
+    pos_[0] = 0.0;
+    pos_[1] = 0.0;
+    vel_[0] = 0.0;
+    vel_[1] = 0.0;
+    eff_[0] = 0.0;
+    eff_[1] = 0.0;
 
     // Setup the joint state interface
-    hardware_interface::JointStateHandle state_handle_1(names_[0], &pos_[0], &vel_[0], &eff_[0]);
+    hardware_interface::JointStateHandle state_handle_1(names_[0], &pos_[0],
+                                                        &vel_[0], &eff_[0]);
     js_iface_.registerHandle(state_handle_1);
 
-    hardware_interface::JointStateHandle state_handle_2(names_[1], &pos_[1], &vel_[1], &eff_[1]);
+    hardware_interface::JointStateHandle state_handle_2(names_[1], &pos_[1],
+                                                        &vel_[1], &eff_[1]);
     js_iface_.registerHandle(state_handle_2);
 
     // Initialize ROS interfaces
-    sub_ = root_nh_.subscribe<sensor_msgs::JointState>("joint_states",
-                                                       1,
-                                                       &JointStateControllerTest::jointStateCb,
-                                                       this);
+    sub_ = root_nh_.subscribe<sensor_msgs::JointState>(
+        "joint_states", 1, &JointStateControllerTest::jointStateCb, this);
   }
 
 protected:
@@ -113,8 +117,8 @@ TEST_F(JointStateControllerTest, publishOk)
   ASSERT_TRUE(controller_nh_.getParam("publish_rate", pub_rate));
 
   rec_msgs_ = 0;
-  const int test_duration = 1; // seconds
-  const int loop_freq = 2 * pub_rate; // faster than controller publish rate
+  const int test_duration = 1;         // seconds
+  const int loop_freq = 2 * pub_rate;  // faster than controller publish rate
   ros::Rate loop_rate(static_cast<double>(loop_freq));
   const ros::Time start_time = ros::Time::now();
   jsc.starting(start_time);
@@ -122,18 +126,23 @@ TEST_F(JointStateControllerTest, publishOk)
   while (true)
   {
     ros::Time now = ros::Time::now();
-    jsc.update(now, ros::Duration()); // NOTE: Second parameter is unused by implementation
+    jsc.update(now, ros::Duration());  // NOTE: Second parameter is unused by
+                                       // implementation
     ros::spinOnce();
-    if (rec_msgs_ >= test_duration * pub_rate) break; // Objective reached
-    if (now - start_time > ros::Duration(2.0 * test_duration)) break; // Prevents unexpected infinite loops
+    if (rec_msgs_ >= test_duration * pub_rate)
+      break;  // Objective reached
+    if (now - start_time > ros::Duration(2.0 * test_duration))
+      break;  // Prevents unexpected infinite loops
     loop_rate.sleep();
   }
   jsc.stopping(ros::Time::now());
 
-  // NOTE: Below we subtract the loop rate because the the published message gets picked up in the
-  // next iteration's spinOnce()
-  const ros::Duration real_test_duration = ros::Time::now() - start_time - loop_rate.expectedCycleTime();
-  const double real_pub_rate = static_cast<double>(rec_msgs_) / real_test_duration.toSec();
+  // NOTE: Below we subtract the loop rate because the the published message
+  // gets picked up in the next iteration's spinOnce()
+  const ros::Duration real_test_duration =
+      ros::Time::now() - start_time - loop_rate.expectedCycleTime();
+  const double real_pub_rate =
+      static_cast<double>(rec_msgs_) / real_test_duration.toSec();
 
   // The publish rate should be close to the nominal value
   EXPECT_NEAR(real_pub_rate, pub_rate, 0.05 * pub_rate);
@@ -154,10 +163,11 @@ TEST_F(JointStateControllerTest, publishKo)
   const ros::Duration test_duration(1.0);
   ros::Rate loop_rate(10.0);
   const ros::Time start_time = ros::Time::now();
-  while(ros::Time::now() - start_time < test_duration)
+  while (ros::Time::now() - start_time < test_duration)
   {
     ros::Time now = ros::Time::now();
-    jsc.update(now, ros::Duration()); // NOTE: Second parameter is unused by implementation
+    jsc.update(now, ros::Duration());  // NOTE: Second parameter is unused by
+                                       // implementation
     ros::spinOnce();
     loop_rate.sleep();
   }
@@ -177,26 +187,31 @@ TEST_F(JointStateControllerTest, valuesOk)
   ros::Duration period(1.0 / pub_rate);
   jsc.starting(ros::Time::now());
 
-  pos_[0] = 1.0; pos_[1] = -1.0;
-  vel_[0] = 2.0; vel_[1] = -2.0;
-  eff_[0] = 3.0; eff_[1] = -3.0;
+  pos_[0] = 1.0;
+  pos_[1] = -1.0;
+  vel_[0] = 2.0;
+  vel_[1] = -2.0;
+  eff_[0] = 3.0;
+  eff_[1] = -3.0;
 
   period.sleep();
   jsc.update(ros::Time::now(), ros::Duration());
-  period.sleep(); ros::spinOnce(); // To trigger callback
+  period.sleep();
+  ros::spinOnce();  // To trigger callback
 
   // Check payload sizes
-  ASSERT_EQ(names_.size(),         last_msg_.name.size());
+  ASSERT_EQ(names_.size(), last_msg_.name.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.position.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.velocity.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.effort.size());
 
   // Check payload values
   typedef std::vector<std::string>::size_type SizeType;
-  typedef std::vector<std::string>::iterator  Iterator;
+  typedef std::vector<std::string>::iterator Iterator;
   for (SizeType raw_id = 0; raw_id < names_.size(); ++raw_id)
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(pos_[raw_id], last_msg_.position[msg_id]);
@@ -209,7 +224,8 @@ TEST_F(JointStateControllerTest, valuesOk)
 TEST_F(JointStateControllerTest, extraJointsOk)
 {
   JointStateController jsc;
-  ros::NodeHandle extra_joints_nh("test_extra_joints_ok/joint_state_controller");
+  ros::NodeHandle extra_joints_nh("test_extra_joints_ok/"
+                                  "joint_state_controller");
   EXPECT_TRUE(jsc.init(&js_iface_, root_nh_, extra_joints_nh));
 
   XmlRpc::XmlRpcValue extra_joints;
@@ -221,13 +237,17 @@ TEST_F(JointStateControllerTest, extraJointsOk)
   ros::Duration period(1.0 / pub_rate);
   jsc.starting(ros::Time::now());
 
-  pos_[0] = 1.0; pos_[1] = -1.0;
-  vel_[0] = 2.0; vel_[1] = -2.0;
-  eff_[0] = 3.0; eff_[1] = -3.0;
+  pos_[0] = 1.0;
+  pos_[1] = -1.0;
+  vel_[0] = 2.0;
+  vel_[1] = -2.0;
+  eff_[0] = 3.0;
+  eff_[1] = -3.0;
 
   period.sleep();
   jsc.update(ros::Time::now(), ros::Duration());
-  period.sleep(); ros::spinOnce(); // To trigger callback
+  period.sleep();
+  ros::spinOnce();  // To trigger callback
 
   // Check payload sizes
   ASSERT_EQ(num_joints, last_msg_.name.size());
@@ -237,10 +257,11 @@ TEST_F(JointStateControllerTest, extraJointsOk)
 
   // Check payload values: joint state interface resources
   typedef std::vector<std::string>::size_type SizeType;
-  typedef std::vector<std::string>::iterator  Iterator;
+  typedef std::vector<std::string>::iterator Iterator;
   for (SizeType raw_id = 0; raw_id < names_.size(); ++raw_id)
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(pos_[raw_id], last_msg_.position[msg_id]);
@@ -250,7 +271,8 @@ TEST_F(JointStateControllerTest, extraJointsOk)
 
   // Check payload values: Extra joints
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra1");
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra1");
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(10.0, last_msg_.position[msg_id]);
@@ -258,15 +280,17 @@ TEST_F(JointStateControllerTest, extraJointsOk)
     EXPECT_EQ(30.0, last_msg_.effort[msg_id]);
   }
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra2");
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra2");
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(-10.0, last_msg_.position[msg_id]);
-    EXPECT_EQ(  0.0, last_msg_.velocity[msg_id]);
-    EXPECT_EQ(  0.0, last_msg_.effort[msg_id]);
+    EXPECT_EQ(0.0, last_msg_.velocity[msg_id]);
+    EXPECT_EQ(0.0, last_msg_.effort[msg_id]);
   }
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra3");
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), "extra3");
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(0.0, last_msg_.position[msg_id]);
@@ -280,7 +304,8 @@ TEST_F(JointStateControllerTest, extraJointsOk)
 TEST_F(JointStateControllerTest, extraJointsKo)
 {
   JointStateController jsc;
-  ros::NodeHandle extra_joints_nh("test_extra_joints_ko/joint_state_controller");
+  ros::NodeHandle extra_joints_nh("test_extra_joints_ko/"
+                                  "joint_state_controller");
   EXPECT_TRUE(jsc.init(&js_iface_, root_nh_, extra_joints_nh));
 
   int pub_rate;
@@ -288,26 +313,31 @@ TEST_F(JointStateControllerTest, extraJointsKo)
   ros::Duration period(1.0 / pub_rate);
   jsc.starting(ros::Time::now());
 
-  pos_[0] = 1.0; pos_[1] = -1.0;
-  vel_[0] = 2.0; vel_[1] = -2.0;
-  eff_[0] = 3.0; eff_[1] = -3.0;
+  pos_[0] = 1.0;
+  pos_[1] = -1.0;
+  vel_[0] = 2.0;
+  vel_[1] = -2.0;
+  eff_[0] = 3.0;
+  eff_[1] = -3.0;
 
   period.sleep();
   jsc.update(ros::Time::now(), ros::Duration());
-  period.sleep(); ros::spinOnce(); // To trigger callback
+  period.sleep();
+  ros::spinOnce();  // To trigger callback
 
   // Check payload sizes
-  ASSERT_EQ(names_.size(),         last_msg_.name.size());
+  ASSERT_EQ(names_.size(), last_msg_.name.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.position.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.velocity.size());
   ASSERT_EQ(last_msg_.name.size(), last_msg_.effort.size());
 
   // Check payload values: No extra joints should be present
   typedef std::vector<std::string>::size_type SizeType;
-  typedef std::vector<std::string>::iterator  Iterator;
+  typedef std::vector<std::string>::iterator Iterator;
   for (SizeType raw_id = 0; raw_id < names_.size(); ++raw_id)
   {
-    Iterator it = std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
+    Iterator it =
+        std::find(last_msg_.name.begin(), last_msg_.name.end(), names_[raw_id]);
     ASSERT_NE(last_msg_.name.end(), it);
     SizeType msg_id = std::distance(last_msg_.name.begin(), it);
     EXPECT_EQ(pos_[raw_id], last_msg_.position[msg_id]);

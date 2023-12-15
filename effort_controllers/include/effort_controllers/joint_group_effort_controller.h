@@ -37,14 +37,13 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_joint_group_command_controller.h>
 
 namespace effort_controllers
 {
-
 /**
- * \brief Forward command controller for a set of effort controlled joints (torque or force).
+ * \brief Forward command controller for a set of effort controlled joints
+ * (torque or force).
  *
  * This class forwards the commanded efforts down to a set of joints.
  *
@@ -56,6 +55,7 @@ namespace effort_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64MultiArray) : The joint efforts to apply
  */
-typedef forward_command_controller::ForwardJointGroupCommandController<hardware_interface::EffortJointInterface>
-        JointGroupEffortController;
-}
+typedef forward_command_controller::ForwardJointGroupCommandController<
+    hardware_interface::EffortJointInterface>
+    JointGroupEffortController;
+}  // namespace effort_controllers

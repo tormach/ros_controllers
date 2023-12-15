@@ -9,23 +9,16 @@ catkin_python_setup()
 # Declare a catkin package
 catkin_package()
 
-
 #############
 ## Install ##
 #############
 
 # Install plugins
-install(FILES plugin.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 # Intall extra
-install(DIRECTORY resource
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+install(DIRECTORY resource DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 # Install scripts
-catkin_install_python(PROGRAMS
-  scripts/rqt_joint_trajectory_controller
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+catkin_install_python(PROGRAMS scripts/rqt_joint_trajectory_controller
+                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

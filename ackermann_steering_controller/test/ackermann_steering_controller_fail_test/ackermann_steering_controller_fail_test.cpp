@@ -35,7 +35,7 @@ TEST_F(AckermannSteeringControllerTest, testWrongJointName)
 {
   // the controller should never be alive
   int secs = 0;
-  while(!isControllerAlive() && secs < 5)
+  while (!isControllerAlive() && secs < 5)
   {
     ros::Duration(1.0).sleep();
     secs++;

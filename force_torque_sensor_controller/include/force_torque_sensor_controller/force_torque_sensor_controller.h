@@ -30,7 +30,6 @@
 
 #pragma once
 
-
 #include <controller_interface/controller.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <hardware_interface/force_torque_sensor_interface.h>
@@ -39,24 +38,30 @@
 
 namespace force_torque_sensor_controller
 {
-
 // this controller gets access to the ForceTorqueSensorInterface
-class ForceTorqueSensorController: public controller_interface::Controller<hardware_interface::ForceTorqueSensorInterface>
+class ForceTorqueSensorController
+  : public controller_interface::Controller<
+        hardware_interface::ForceTorqueSensorInterface>
 {
 public:
-  ForceTorqueSensorController(){}
+  ForceTorqueSensorController()
+  {
+  }
 
-  virtual bool init(hardware_interface::ForceTorqueSensorInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh);
+  virtual bool init(hardware_interface::ForceTorqueSensorInterface* hw,
+                    ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
   virtual void starting(const ros::Time& time);
   virtual void update(const ros::Time& time, const ros::Duration& /*period*/);
   virtual void stopping(const ros::Time& /*time*/);
 
 private:
   std::vector<hardware_interface::ForceTorqueSensorHandle> sensors_;
-  typedef std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::WrenchStamped> > RtPublisherPtr;
+  typedef std::shared_ptr<
+      realtime_tools::RealtimePublisher<geometry_msgs::WrenchStamped> >
+      RtPublisherPtr;
   std::vector<RtPublisherPtr> realtime_pubs_;
   std::vector<ros::Time> last_publish_times_;
   double publish_rate_;
 };
 
-}
+}  // namespace force_torque_sensor_controller

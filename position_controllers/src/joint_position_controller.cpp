@@ -40,10 +40,12 @@
 #include <ros/time.h>
 
 template <class T>
-void forward_command_controller::ForwardCommandController<T>::starting(const ros::Time& time)
+void forward_command_controller::ForwardCommandController<T>::starting(
+    const ros::Time& time)
 {
   // Start controller with current joint position
   command_buffer_.writeFromNonRT(joint_.getPosition());
 }
 
-PLUGINLIB_EXPORT_CLASS(position_controllers::JointPositionController,controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(position_controllers::JointPositionController,
+                       controller_interface::ControllerBase)

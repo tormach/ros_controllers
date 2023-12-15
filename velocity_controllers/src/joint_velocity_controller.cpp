@@ -38,11 +38,12 @@
 #include <pluginlib/class_list_macros.hpp>
 
 template <class T>
-void forward_command_controller::ForwardCommandController<T>::starting(const ros::Time& time)
+void forward_command_controller::ForwardCommandController<T>::starting(
+    const ros::Time& time)
 {
   // Start controller with 0.0 velocity
   command_buffer_.writeFromNonRT(0.0);
 }
 
-
-PLUGINLIB_EXPORT_CLASS(velocity_controllers::JointVelocityController,controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(velocity_controllers::JointVelocityController,
+                       controller_interface::ControllerBase)

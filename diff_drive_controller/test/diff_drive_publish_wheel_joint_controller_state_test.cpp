@@ -54,7 +54,8 @@ TEST_F(DiffDriveControllerTest, testPublishJointTrajectoryControllerStateTopic)
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "diff_drive_publish_wheel_joint_controller_state_topic_test");
+  ros::init(argc, argv,
+            "diff_drive_publish_wheel_joint_controller_state_topic_test");
 
   ros::AsyncSpinner spinner(1);
   spinner.start();

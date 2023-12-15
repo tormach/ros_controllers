@@ -34,7 +34,7 @@
 TEST_F(AckermannSteeringControllerTest, testLinearJerkLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -55,8 +55,11 @@ TEST_F(AckermannSteeringControllerTest, testLinearJerkLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.37m.s-1
-  EXPECT_NEAR(new_odom.twist.twist.linear.x, 0.37, JERK_LINEAR_VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_NEAR(new_odom.twist.twist.linear.x, 0.37,
+              JERK_LINEAR_VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
@@ -65,7 +68,7 @@ TEST_F(AckermannSteeringControllerTest, testLinearJerkLimits)
 TEST_F(AckermannSteeringControllerTest, testLinearAccelerationLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -86,8 +89,11 @@ TEST_F(AckermannSteeringControllerTest, testLinearAccelerationLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.5 m.s-1, which is 1.0m.s-2 * 0.5s
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 0.5 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            0.5 + VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
@@ -96,7 +102,7 @@ TEST_F(AckermannSteeringControllerTest, testLinearAccelerationLimits)
 TEST_F(AckermannSteeringControllerTest, testLinearVelocityLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -117,8 +123,11 @@ TEST_F(AckermannSteeringControllerTest, testLinearVelocityLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 1.0 m.s-1, the limit
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 1.0 + VELOCITY_TOLERANCE);
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), EPS);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            1.0 + VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      EPS);
 
   cmd_vel.linear.x = 0.0;
   publish(cmd_vel);
@@ -127,7 +136,7 @@ TEST_F(AckermannSteeringControllerTest, testLinearVelocityLimits)
 TEST_F(AckermannSteeringControllerTest, testAngularJerkLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -141,8 +150,9 @@ TEST_F(AckermannSteeringControllerTest, testAngularJerkLimits)
   nav_msgs::Odometry old_odom = getLastOdom();
   // send a big command
   cmd_vel.angular.z = 10.0;
-  // send linear command too 
-  // because sending only angular command doesn't actuate wheels for steer drive mechanism
+  // send linear command too
+  // because sending only angular command doesn't actuate wheels for steer drive
+  // mechanism
   cmd_vel.linear.x = 0.1;
   publish(cmd_vel);
   // wait for a while
@@ -151,7 +161,8 @@ TEST_F(AckermannSteeringControllerTest, testAngularJerkLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.18rad.s-1
-  EXPECT_NEAR(new_odom.twist.twist.angular.z, 0.18, JERK_ANGULAR_VELOCITY_TOLERANCE);
+  EXPECT_NEAR(new_odom.twist.twist.angular.z, 0.18,
+              JERK_ANGULAR_VELOCITY_TOLERANCE);
   // check if the robot speed is now 0.1m.s-1
   EXPECT_NEAR(new_odom.twist.twist.linear.x, 0.1, VELOCITY_TOLERANCE);
 
@@ -162,7 +173,7 @@ TEST_F(AckermannSteeringControllerTest, testAngularJerkLimits)
 TEST_F(AckermannSteeringControllerTest, testAngularAccelerationLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -176,8 +187,9 @@ TEST_F(AckermannSteeringControllerTest, testAngularAccelerationLimits)
   nav_msgs::Odometry old_odom = getLastOdom();
   // send a big command
   cmd_vel.angular.z = 10.0;
-  // send linear command too 
-  // because sending only angular command doesn't actuate wheels for steer drive mechanism
+  // send linear command too
+  // because sending only angular command doesn't actuate wheels for steer drive
+  // mechanism
   cmd_vel.linear.x = 0.1;
   publish(cmd_vel);
   // wait for a while
@@ -186,9 +198,12 @@ TEST_F(AckermannSteeringControllerTest, testAngularAccelerationLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.25rad.s-1, which is 0.5.s-2 * 0.5s
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), 0.25 + VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      0.25 + VELOCITY_TOLERANCE);
   // check if the robot speed is now 0.1m.s-1
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 0.1 + VELOCITY_TOLERANCE);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            0.1 + VELOCITY_TOLERANCE);
 
   cmd_vel.angular.z = 0.0;
   publish(cmd_vel);
@@ -197,7 +212,7 @@ TEST_F(AckermannSteeringControllerTest, testAngularAccelerationLimits)
 TEST_F(AckermannSteeringControllerTest, testAngularVelocityLimits)
 {
   // wait for ROS
-  while(!isControllerAlive())
+  while (!isControllerAlive())
   {
     ros::Duration(0.1).sleep();
   }
@@ -210,8 +225,9 @@ TEST_F(AckermannSteeringControllerTest, testAngularVelocityLimits)
   // get initial odom
   nav_msgs::Odometry old_odom = getLastOdom();
   cmd_vel.angular.z = 10.0;
-  // send linear command too 
-  // because sending only angular command doesn't actuate wheels for steer drive mechanism
+  // send linear command too
+  // because sending only angular command doesn't actuate wheels for steer drive
+  // mechanism
   cmd_vel.linear.x = 0.1;
   publish(cmd_vel);
   // wait for a while
@@ -220,9 +236,12 @@ TEST_F(AckermannSteeringControllerTest, testAngularVelocityLimits)
   nav_msgs::Odometry new_odom = getLastOdom();
 
   // check if the robot speed is now 0.5rad.s-1, the limit
-  EXPECT_LT(fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z), 0.5 + ANGULAR_VELOCITY_TOLERANCE);
+  EXPECT_LT(
+      fabs(new_odom.twist.twist.angular.z - old_odom.twist.twist.angular.z),
+      0.5 + ANGULAR_VELOCITY_TOLERANCE);
   // check if the robot speed is now 0.1m.s-1
-  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x), 0.1 + VELOCITY_TOLERANCE);
+  EXPECT_LT(fabs(new_odom.twist.twist.linear.x - old_odom.twist.twist.linear.x),
+            0.1 + VELOCITY_TOLERANCE);
 
   cmd_vel.angular.z = 0.0;
   publish(cmd_vel);
@@ -235,7 +254,7 @@ int main(int argc, char** argv)
 
   ros::AsyncSpinner spinner(1);
   spinner.start();
-  //ros::Duration(0.5).sleep();
+  // ros::Duration(0.5).sleep();
   int ret = RUN_ALL_TESTS();
   spinner.stop();
   ros::shutdown();

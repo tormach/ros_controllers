@@ -29,7 +29,6 @@
 
 #pragma once
 
-
 #include <cassert>
 #include <string>
 #include <vector>
@@ -44,40 +43,50 @@
 #include <hardware_interface/posvelacc_command_interface.h>
 
 /**
- * \brief Helper class to simplify integrating the JointTrajectoryController with different hardware interfaces.
+ * \brief Helper class to simplify integrating the JointTrajectoryController
+ * with different hardware interfaces.
  *
- * The JointTrajectoryController outputs position, velocity and acceleration command triplets, while the more common hardware
- * interfaces accept position, velocity or effort commands.
+ * The JointTrajectoryController outputs position, velocity and acceleration
+ * command triplets, while the more common hardware interfaces accept position,
+ * velocity or effort commands.
  *
- * Use one of the available template specializations of this class (or create your own) to adapt the
- * JointTrajectoryController to a specific hardware interface.
+ * Use one of the available template specializations of this class (or create
+ * your own) to adapt the JointTrajectoryController to a specific hardware
+ * interface.
  */
 template <class HardwareInterface, class State>
 class HardwareInterfaceAdapter
 {
 public:
-  bool init(std::vector<typename HardwareInterface::ResourceHandleType>& /*joint_handles*/, ros::NodeHandle& /*controller_nh*/)
+  bool
+  init(std::vector<
+           typename HardwareInterface::ResourceHandleType>& /*joint_handles*/,
+       ros::NodeHandle& /*controller_nh*/)
   {
     return false;
   }
 
-  void starting(const ros::Time& /*time*/) {}
-  void stopping(const ros::Time& /*time*/) {}
+  void starting(const ros::Time& /*time*/)
+  {
+  }
+  void stopping(const ros::Time& /*time*/)
+  {
+  }
 
-  void updateCommand(const ros::Time&     /*time*/,
-                     const ros::Duration& /*period*/,
-                     const State&         /*desired_state*/,
-                     const State&         /*state_error*/) {}
+  void updateCommand(const ros::Time& /*time*/, const ros::Duration& /*period*/,
+                     const State& /*desired_state*/,
+                     const State& /*state_error*/)
+  {
+  }
 };
 
 /**
- * \brief Adapter for a position-controlled hardware interface. Forwards desired positions as commands.
+ * \brief Adapter for a position-controlled hardware interface. Forwards desired
+ * positions as commands.
  *
- * The following is an example configuration of a controller that uses this adapter.
- * \code
- * head_controller:
- *   type: "position_controllers/JointTrajectoryController"
- *   joints:
+ * The following is an example configuration of a controller that uses this
+ * adapter. \code head_controller: type:
+ * "position_controllers/JointTrajectoryController" joints:
  *     - head_1_joint
  *     - head_2_joint
  *
@@ -91,12 +100,16 @@ public:
  * \endcode
  */
 template <class State>
-class HardwareInterfaceAdapter<hardware_interface::PositionJointInterface, State>
+class HardwareInterfaceAdapter<hardware_interface::PositionJointInterface,
+                               State>
 {
 public:
-  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr) {}
+  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr)
+  {
+  }
 
-  bool init(std::vector<hardware_interface::JointHandle>& joint_handles, ros::NodeHandle& /*controller_nh*/)
+  bool init(std::vector<hardware_interface::JointHandle>& joint_handles,
+            ros::NodeHandle& /*controller_nh*/)
   {
     // Store pointer to joint handles
     joint_handles_ptr_ = &joint_handles;
@@ -106,7 +119,10 @@ public:
 
   void starting(const ros::Time& /*time*/)
   {
-    if (!joint_handles_ptr_) {return;}
+    if (!joint_handles_ptr_)
+    {
+      return;
+    }
 
     // Semantic zero for commands
     for (auto& jh : *joint_handles_ptr_)
@@ -115,16 +131,19 @@ public:
     }
   }
 
-  void stopping(const ros::Time& /*time*/) {}
+  void stopping(const ros::Time& /*time*/)
+  {
+  }
 
-  void updateCommand(const ros::Time&     /*time*/,
-                     const ros::Duration& /*period*/,
-                     const State&         desired_state,
-                     const State&         /*state_error*/)
+  void updateCommand(const ros::Time& /*time*/, const ros::Duration& /*period*/,
+                     const State& desired_state, const State& /*state_error*/)
   {
     // Forward desired position to command
     const unsigned int n_joints = joint_handles_ptr_->size();
-    for (unsigned int i = 0; i < n_joints; ++i) {(*joint_handles_ptr_)[i].setCommand(desired_state.position[i]);}
+    for (unsigned int i = 0; i < n_joints; ++i)
+    {
+      (*joint_handles_ptr_)[i].setCommand(desired_state.position[i]);
+    }
   }
 
 private:
@@ -132,21 +151,27 @@ private:
 };
 
 /**
- * \brief Helper base class template for closed loop HardwareInterfaceAdapter implementations.
+ * \brief Helper base class template for closed loop HardwareInterfaceAdapter
+ * implementations.
  *
- * Adapters leveraging (specializing) this class will generate a command given the desired state and state error using a
- * velocity feedforward term plus a corrective PID term.
+ * Adapters leveraging (specializing) this class will generate a command given
+ * the desired state and state error using a velocity feedforward term plus a
+ * corrective PID term.
  *
- * Use one of the available template specializations of this class (or create your own) to adapt the
- * JointTrajectoryController to a specific hardware interface.
+ * Use one of the available template specializations of this class (or create
+ * your own) to adapt the JointTrajectoryController to a specific hardware
+ * interface.
  */
 template <class State>
 class ClosedLoopHardwareInterfaceAdapter
 {
 public:
-  ClosedLoopHardwareInterfaceAdapter() : joint_handles_ptr_(nullptr) {}
+  ClosedLoopHardwareInterfaceAdapter() : joint_handles_ptr_(nullptr)
+  {
+  }
 
-  bool init(std::vector<hardware_interface::JointHandle>& joint_handles, ros::NodeHandle& controller_nh)
+  bool init(std::vector<hardware_interface::JointHandle>& joint_handles,
+            ros::NodeHandle& controller_nh)
   {
     // Store pointer to joint handles
     joint_handles_ptr_ = &joint_handles;
@@ -156,13 +181,15 @@ public:
     for (unsigned int i = 0; i < pids_.size(); ++i)
     {
       // Node handle to PID gains
-      ros::NodeHandle joint_nh(controller_nh, std::string("gains/") + joint_handles[i].getName());
+      ros::NodeHandle joint_nh(controller_nh, std::string("gains/") +
+                                                  joint_handles[i].getName());
 
       // Init PID gains from ROS parameter server
       pids_[i].reset(new control_toolbox::Pid());
       if (!pids_[i]->init(joint_nh))
       {
-        ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter server.");
+        ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter "
+                        "server.");
         return false;
       }
     }
@@ -171,7 +198,9 @@ public:
     velocity_ff_.resize(joint_handles.size());
     for (unsigned int i = 0; i < velocity_ff_.size(); ++i)
     {
-      controller_nh.param(std::string("velocity_ff/") + joint_handles[i].getName(), velocity_ff_[i], 0.0);
+      controller_nh.param(std::string("velocity_ff/") +
+                              joint_handles[i].getName(),
+                          velocity_ff_[i], 0.0);
     }
 
     return true;
@@ -179,7 +208,10 @@ public:
 
   void starting(const ros::Time& /*time*/)
   {
-    if (!joint_handles_ptr_) {return;}
+    if (!joint_handles_ptr_)
+    {
+      return;
+    }
 
     // Reset PIDs, zero commands
     for (unsigned int i = 0; i < pids_.size(); ++i)
@@ -189,12 +221,12 @@ public:
     }
   }
 
-  void stopping(const ros::Time& /*time*/) {}
+  void stopping(const ros::Time& /*time*/)
+  {
+  }
 
-  void updateCommand(const ros::Time&     /*time*/,
-                     const ros::Duration& period,
-                     const State&         desired_state,
-                     const State&         state_error)
+  void updateCommand(const ros::Time& /*time*/, const ros::Duration& period,
+                     const State& desired_state, const State& state_error)
   {
     const unsigned int n_joints = joint_handles_ptr_->size();
 
@@ -207,7 +239,10 @@ public:
     // Update PIDs
     for (unsigned int i = 0; i < n_joints; ++i)
     {
-      const double command = (desired_state.velocity[i] * velocity_ff_[i]) + pids_[i]->computeCommand(state_error.position[i], state_error.velocity[i], period);
+      const double command =
+          (desired_state.velocity[i] * velocity_ff_[i]) +
+          pids_[i]->computeCommand(state_error.position[i],
+                                   state_error.velocity[i], period);
       (*joint_handles_ptr_)[i].setCommand(command);
     }
   }
@@ -222,15 +257,13 @@ private:
 };
 
 /**
- * \brief Adapter for an velocity-controlled hardware interface. Maps position and velocity errors to velocity commands
- * through a velocity PID loop.
+ * \brief Adapter for an velocity-controlled hardware interface. Maps position
+ * and velocity errors to velocity commands through a velocity PID loop.
  *
- * The following is an example configuration of a controller that uses this adapter. Notice the \p gains and \p velocity_ff
- * entries:
- * \code
- * head_controller:
- *   type: "velocity_controllers/JointTrajectoryController"
- *   joints:
+ * The following is an example configuration of a controller that uses this
+ * adapter. Notice the \p gains and \p velocity_ff entries: \code
+ * head_controller: type: "velocity_controllers/JointTrajectoryController"
+ * joints:
  *     - head_1_joint
  *     - head_2_joint
  *   gains:
@@ -249,19 +282,19 @@ private:
  * \endcode
  */
 template <class State>
-class HardwareInterfaceAdapter<hardware_interface::VelocityJointInterface, State> : public ClosedLoopHardwareInterfaceAdapter<State>
-{};
+class HardwareInterfaceAdapter<hardware_interface::VelocityJointInterface,
+                               State>
+  : public ClosedLoopHardwareInterfaceAdapter<State>
+{
+};
 
 /**
- * \brief Adapter for an effort-controlled hardware interface. Maps position and velocity errors to effort commands
- * through a position PID loop.
+ * \brief Adapter for an effort-controlled hardware interface. Maps position and
+ * velocity errors to effort commands through a position PID loop.
  *
- * The following is an example configuration of a controller that uses this adapter. Notice the \p gains and \p velocity_ff
- * entries:
- * \code
- * head_controller:
- *   type: "effort_controllers/JointTrajectoryController"
- *   joints:
+ * The following is an example configuration of a controller that uses this
+ * adapter. Notice the \p gains and \p velocity_ff entries: \code
+ * head_controller: type: "effort_controllers/JointTrajectoryController" joints:
  *     - head_1_joint
  *     - head_2_joint
  *   gains:
@@ -280,19 +313,25 @@ class HardwareInterfaceAdapter<hardware_interface::VelocityJointInterface, State
  * \endcode
  */
 template <class State>
-class HardwareInterfaceAdapter<hardware_interface::EffortJointInterface, State> : public ClosedLoopHardwareInterfaceAdapter<State>
-{};
+class HardwareInterfaceAdapter<hardware_interface::EffortJointInterface, State>
+  : public ClosedLoopHardwareInterfaceAdapter<State>
+{
+};
 
 /**
- * \brief Adapter for a pos-vel hardware interface. Forwards desired positions with velcities as commands.
+ * \brief Adapter for a pos-vel hardware interface. Forwards desired positions
+ * with velcities as commands.
  */
 template <class State>
 class HardwareInterfaceAdapter<hardware_interface::PosVelJointInterface, State>
 {
 public:
-  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr) {}
+  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr)
+  {
+  }
 
-  bool init(std::vector<hardware_interface::PosVelJointHandle>& joint_handles, ros::NodeHandle& /*controller_nh*/)
+  bool init(std::vector<hardware_interface::PosVelJointHandle>& joint_handles,
+            ros::NodeHandle& /*controller_nh*/)
   {
     // Store pointer to joint handles
     joint_handles_ptr_ = &joint_handles;
@@ -300,19 +339,22 @@ public:
     return true;
   }
 
-  void starting(const ros::Time& /*time*/) {}
-  void stopping(const ros::Time& /*time*/) {}
+  void starting(const ros::Time& /*time*/)
+  {
+  }
+  void stopping(const ros::Time& /*time*/)
+  {
+  }
 
-  void updateCommand(const ros::Time&     /*time*/,
-                     const ros::Duration& /*period*/,
-                     const State&         desired_state,
-                     const State&         /*state_error*/)
+  void updateCommand(const ros::Time& /*time*/, const ros::Duration& /*period*/,
+                     const State& desired_state, const State& /*state_error*/)
   {
     // Forward desired position to command
     const unsigned int n_joints = joint_handles_ptr_->size();
     for (unsigned int i = 0; i < n_joints; ++i)
     {
-      (*joint_handles_ptr_)[i].setCommand(desired_state.position[i], desired_state.velocity[i]);
+      (*joint_handles_ptr_)[i].setCommand(desired_state.position[i],
+                                          desired_state.velocity[i]);
     }
   }
 
@@ -321,15 +363,21 @@ private:
 };
 
 /**
- * \brief Adapter for a spline-controlled hardware interface. Forwards desired positions as commands.
+ * \brief Adapter for a spline-controlled hardware interface. Forwards desired
+ * positions as commands.
  */
 template <class State>
-class HardwareInterfaceAdapter<hardware_interface::PosVelAccJointInterface, State>
+class HardwareInterfaceAdapter<hardware_interface::PosVelAccJointInterface,
+                               State>
 {
 public:
-  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr) {}
+  HardwareInterfaceAdapter() : joint_handles_ptr_(nullptr)
+  {
+  }
 
-  bool init(std::vector<hardware_interface::PosVelAccJointHandle>& joint_handles, ros::NodeHandle& /*controller_nh*/)
+  bool
+  init(std::vector<hardware_interface::PosVelAccJointHandle>& joint_handles,
+       ros::NodeHandle& /*controller_nh*/)
   {
     // Store pointer to joint handles
     joint_handles_ptr_ = &joint_handles;
@@ -337,19 +385,23 @@ public:
     return true;
   }
 
-  void starting(const ros::Time& /*time*/) {}
-  void stopping(const ros::Time& /*time*/) {}
+  void starting(const ros::Time& /*time*/)
+  {
+  }
+  void stopping(const ros::Time& /*time*/)
+  {
+  }
 
-  void updateCommand(const ros::Time&     /*time*/,
-                     const ros::Duration& /*period*/,
-                     const State&         desired_state,
-                     const State&         /*state_error*/)
+  void updateCommand(const ros::Time& /*time*/, const ros::Duration& /*period*/,
+                     const State& desired_state, const State& /*state_error*/)
   {
     // Forward desired position to command
     const unsigned int n_joints = joint_handles_ptr_->size();
     for (unsigned int i = 0; i < n_joints; ++i)
     {
-      (*joint_handles_ptr_)[i].setCommand(desired_state.position[i], desired_state.velocity[i], desired_state.acceleration[i]);
+      (*joint_handles_ptr_)[i].setCommand(desired_state.position[i],
+                                          desired_state.velocity[i],
+                                          desired_state.acceleration[i]);
     }
   }
 

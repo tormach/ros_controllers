@@ -43,18 +43,19 @@
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.hpp>
 
-namespace effort_controllers {
-
-JointPositionController::JointPositionController()
-  : loop_count_(0)
-{}
+namespace effort_controllers
+{
+JointPositionController::JointPositionController() : loop_count_(0)
+{
+}
 
 JointPositionController::~JointPositionController()
 {
   sub_command_.shutdown();
 }
 
-bool JointPositionController::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
+bool JointPositionController::init(
+    hardware_interface::EffortJointInterface* robot, ros::NodeHandle& n)
 {
   // Get joint name from parameter server
   std::string joint_name;
@@ -70,10 +71,12 @@ bool JointPositionController::init(hardware_interface::EffortJointInterface *rob
 
   // Start realtime state publisher
   controller_state_publisher_.reset(
-    new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>(n, "state", 1));
+      new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>(
+          n, "state", 1));
 
   // Start command subscriber
-  sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &JointPositionController::setCommandCB, this);
+  sub_command_ = n.subscribe<std_msgs::Float64>(
+      "command", 1, &JointPositionController::setCommandCB, this);
 
   // Get joint handle from hardware interface
   joint_ = robot->getHandle(joint_name);
@@ -95,20 +98,26 @@ bool JointPositionController::init(hardware_interface::EffortJointInterface *rob
   return true;
 }
 
-void JointPositionController::setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup)
+void JointPositionController::setGains(const double& p, const double& i,
+                                       const double& d, const double& i_max,
+                                       const double& i_min,
+                                       const bool& antiwindup)
 {
-  pid_controller_.setGains(p,i,d,i_max,i_min,antiwindup);
+  pid_controller_.setGains(p, i, d, i_max, i_min, antiwindup);
 }
 
-void JointPositionController::getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup)
+void JointPositionController::getGains(double& p, double& i, double& d,
+                                       double& i_max, double& i_min,
+                                       bool& antiwindup)
 {
-  pid_controller_.getGains(p,i,d,i_max,i_min,antiwindup);
+  pid_controller_.getGains(p, i, d, i_max, i_min, antiwindup);
 }
 
-void JointPositionController::getGains(double &p, double &i, double &d, double &i_max, double &i_min)
+void JointPositionController::getGains(double& p, double& i, double& d,
+                                       double& i_max, double& i_min)
 {
   bool dummy;
-  pid_controller_.getGains(p,i,d,i_max,i_min,dummy);
+  pid_controller_.getGains(p, i, d, i_max, i_min, dummy);
 }
 
 void JointPositionController::printDebug()
@@ -130,10 +139,13 @@ double JointPositionController::getPosition()
 void JointPositionController::setCommand(double pos_command)
 {
   command_struct_.position_ = pos_command;
-  command_struct_.has_velocity_ = false; // Flag to ignore the velocity command since our setCommand method did not include it
+  command_struct_.has_velocity_ =
+      false;  // Flag to ignore the velocity command since our setCommand method
+              // did not include it
 
   // the writeFromNonRT can be used in RT, if you have the guarantee that
-  //  * no non-rt thread is calling the same function (we're not subscribing to ros callbacks)
+  //  * no non-rt thread is calling the same function (we're not subscribing to
+  //  ros callbacks)
   //  * there is only one single rt thread
   command_.writeFromNonRT(command_struct_);
 }
@@ -163,12 +175,13 @@ void JointPositionController::starting(const ros::Time& time)
   pid_controller_.reset();
 }
 
-void JointPositionController::update(const ros::Time& time, const ros::Duration& period)
+void JointPositionController::update(const ros::Time& time,
+                                     const ros::Duration& period)
 {
   command_struct_ = *(command_.readFromRT());
   double command_position = command_struct_.position_;
   double command_velocity = command_struct_.velocity_;
-  bool has_velocity_ =  command_struct_.has_velocity_;
+  bool has_velocity_ = command_struct_.has_velocity_;
 
   double error, vel_error;
   double commanded_effort;
@@ -182,17 +195,15 @@ void JointPositionController::update(const ros::Time& time, const ros::Duration&
   if (joint_urdf_->type == urdf::Joint::REVOLUTE)
   {
     angles::shortest_angular_distance_with_large_limits(
-      current_position,
-      command_position,
-      joint_urdf_->limits->lower,
-      joint_urdf_->limits->upper,
-      error);
+        current_position, command_position, joint_urdf_->limits->lower,
+        joint_urdf_->limits->upper, error);
   }
   else if (joint_urdf_->type == urdf::Joint::CONTINUOUS)
   {
-    error = angles::shortest_angular_distance(current_position, command_position);
+    error =
+        angles::shortest_angular_distance(current_position, command_position);
   }
-  else //prismatic
+  else  // prismatic
   {
     error = command_position - current_position;
   }
@@ -204,7 +215,8 @@ void JointPositionController::update(const ros::Time& time, const ros::Duration&
     vel_error = command_velocity - joint_.getVelocity();
 
     // Set the PID error and compute the PID command with nonuniform
-    // time step size. This also allows the user to pass in a precomputed derivative error.
+    // time step size. This also allows the user to pass in a precomputed
+    // derivative error.
     commanded_effort = pid_controller_.computeCommand(error, vel_error, period);
   }
   else
@@ -219,12 +231,13 @@ void JointPositionController::update(const ros::Time& time, const ros::Duration&
   // publish state
   if (loop_count_ % 10 == 0)
   {
-    if(controller_state_publisher_ && controller_state_publisher_->trylock())
+    if (controller_state_publisher_ && controller_state_publisher_->trylock())
     {
       controller_state_publisher_->msg_.header.stamp = time;
       controller_state_publisher_->msg_.set_point = command_position;
       controller_state_publisher_->msg_.process_value = current_position;
-      controller_state_publisher_->msg_.process_value_dot = joint_.getVelocity();
+      controller_state_publisher_->msg_.process_value_dot =
+          joint_.getVelocity();
       controller_state_publisher_->msg_.error = error;
       controller_state_publisher_->msg_.time_step = period.toSec();
       controller_state_publisher_->msg_.command = commanded_effort;
@@ -232,12 +245,11 @@ void JointPositionController::update(const ros::Time& time, const ros::Duration&
       double dummy;
       bool antiwindup;
       getGains(controller_state_publisher_->msg_.p,
-        controller_state_publisher_->msg_.i,
-        controller_state_publisher_->msg_.d,
-        controller_state_publisher_->msg_.i_clamp,
-        dummy,
-        antiwindup);
-      controller_state_publisher_->msg_.antiwindup = static_cast<char>(antiwindup);
+               controller_state_publisher_->msg_.i,
+               controller_state_publisher_->msg_.d,
+               controller_state_publisher_->msg_.i_clamp, dummy, antiwindup);
+      controller_state_publisher_->msg_.antiwindup =
+          static_cast<char>(antiwindup);
       controller_state_publisher_->unlockAndPublish();
     }
   }
@@ -249,23 +261,26 @@ void JointPositionController::setCommandCB(const std_msgs::Float64ConstPtr& msg)
   setCommand(msg->data);
 }
 
-// Note: we may want to remove this function once issue https://github.com/ros/angles/issues/2 is resolved
-void JointPositionController::enforceJointLimits(double &command)
+// Note: we may want to remove this function once issue
+// https://github.com/ros/angles/issues/2 is resolved
+void JointPositionController::enforceJointLimits(double& command)
 {
   // Check that this joint has applicable limits
-  if (joint_urdf_->type == urdf::Joint::REVOLUTE || joint_urdf_->type == urdf::Joint::PRISMATIC)
+  if (joint_urdf_->type == urdf::Joint::REVOLUTE ||
+      joint_urdf_->type == urdf::Joint::PRISMATIC)
   {
-    if( command > joint_urdf_->limits->upper ) // above upper limnit
+    if (command > joint_urdf_->limits->upper)  // above upper limnit
     {
       command = joint_urdf_->limits->upper;
     }
-    else if( command < joint_urdf_->limits->lower ) // below lower limit
+    else if (command < joint_urdf_->limits->lower)  // below lower limit
     {
       command = joint_urdf_->limits->lower;
     }
   }
 }
 
-} // namespace
+}  // namespace effort_controllers
 
-PLUGINLIB_EXPORT_CLASS( effort_controllers::JointPositionController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(effort_controllers::JointPositionController,
+                       controller_interface::ControllerBase)

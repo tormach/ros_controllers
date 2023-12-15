@@ -36,20 +36,20 @@
 #include <effort_controllers/joint_velocity_controller.h>
 #include <pluginlib/class_list_macros.hpp>
 
-
-namespace effort_controllers {
-
-JointVelocityController::JointVelocityController()
-: command_(0), loop_count_(0)
-{}
+namespace effort_controllers
+{
+JointVelocityController::JointVelocityController() : command_(0), loop_count_(0)
+{
+}
 
 JointVelocityController::~JointVelocityController()
 {
   sub_command_.shutdown();
 }
 
-bool JointVelocityController::init(hardware_interface::EffortJointInterface *robot, 
-  const std::string &joint_name, const control_toolbox::Pid &pid)
+bool JointVelocityController::init(
+    hardware_interface::EffortJointInterface* robot,
+    const std::string& joint_name, const control_toolbox::Pid& pid)
 {
   pid_controller_ = pid;
 
@@ -59,11 +59,13 @@ bool JointVelocityController::init(hardware_interface::EffortJointInterface *rob
   return true;
 }
 
-bool JointVelocityController::init(hardware_interface::EffortJointInterface *robot, ros::NodeHandle &n)
+bool JointVelocityController::init(
+    hardware_interface::EffortJointInterface* robot, ros::NodeHandle& n)
 {
   // Get joint name from parameter server
   std::string joint_name;
-  if (!n.getParam("joint", joint_name)) {
+  if (!n.getParam("joint", joint_name))
+  {
     ROS_ERROR("No joint given (namespace: %s)", n.getNamespace().c_str());
     return false;
   }
@@ -77,29 +79,36 @@ bool JointVelocityController::init(hardware_interface::EffortJointInterface *rob
 
   // Start realtime state publisher
   controller_state_publisher_.reset(
-    new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>
-    (n, "state", 1));
+      new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>(
+          n, "state", 1));
 
   // Start command subscriber
-  sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &JointVelocityController::setCommandCB, this);
+  sub_command_ = n.subscribe<std_msgs::Float64>(
+      "command", 1, &JointVelocityController::setCommandCB, this);
 
   return true;
 }
 
-void JointVelocityController::setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup)
+void JointVelocityController::setGains(const double& p, const double& i,
+                                       const double& d, const double& i_max,
+                                       const double& i_min,
+                                       const bool& antiwindup)
 {
-  pid_controller_.setGains(p,i,d,i_max,i_min,antiwindup);
+  pid_controller_.setGains(p, i, d, i_max, i_min, antiwindup);
 }
 
-void JointVelocityController::getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup)
+void JointVelocityController::getGains(double& p, double& i, double& d,
+                                       double& i_max, double& i_min,
+                                       bool& antiwindup)
 {
-  pid_controller_.getGains(p,i,d,i_max,i_min,antiwindup);
+  pid_controller_.getGains(p, i, d, i_max, i_min, antiwindup);
 }
 
-void JointVelocityController::getGains(double &p, double &i, double &d, double &i_max, double &i_min)
+void JointVelocityController::getGains(double& p, double& i, double& d,
+                                       double& i_max, double& i_min)
 {
   bool dummy;
-  pid_controller_.getGains(p,i,d,i_max,i_min,dummy);
+  pid_controller_.getGains(p, i, d, i_max, i_min, dummy);
 }
 
 void JointVelocityController::printDebug()
@@ -130,7 +139,8 @@ void JointVelocityController::starting(const ros::Time& time)
   pid_controller_.reset();
 }
 
-void JointVelocityController::update(const ros::Time& time, const ros::Duration& period)
+void JointVelocityController::update(const ros::Time& time,
+                                     const ros::Duration& period)
 {
   double error = command_ - joint_.getVelocity();
 
@@ -141,9 +151,9 @@ void JointVelocityController::update(const ros::Time& time, const ros::Duration&
 
   joint_.setCommand(commanded_effort);
 
-  if(loop_count_ % 10 == 0)
+  if (loop_count_ % 10 == 0)
   {
-    if(controller_state_publisher_ && controller_state_publisher_->trylock())
+    if (controller_state_publisher_ && controller_state_publisher_->trylock())
     {
       controller_state_publisher_->msg_.header.stamp = time;
       controller_state_publisher_->msg_.set_point = command_;
@@ -155,12 +165,11 @@ void JointVelocityController::update(const ros::Time& time, const ros::Duration&
       double dummy;
       bool antiwindup;
       getGains(controller_state_publisher_->msg_.p,
-        controller_state_publisher_->msg_.i,
-        controller_state_publisher_->msg_.d,
-        controller_state_publisher_->msg_.i_clamp,
-        dummy,
-        antiwindup);
-      controller_state_publisher_->msg_.antiwindup = static_cast<char>(antiwindup);
+               controller_state_publisher_->msg_.i,
+               controller_state_publisher_->msg_.d,
+               controller_state_publisher_->msg_.i_clamp, dummy, antiwindup);
+      controller_state_publisher_->msg_.antiwindup =
+          static_cast<char>(antiwindup);
       controller_state_publisher_->unlockAndPublish();
     }
   }
@@ -172,6 +181,7 @@ void JointVelocityController::setCommandCB(const std_msgs::Float64ConstPtr& msg)
   command_ = msg->data;
 }
 
-} // namespace
+}  // namespace effort_controllers
 
-PLUGINLIB_EXPORT_CLASS( effort_controllers::JointVelocityController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(effort_controllers::JointVelocityController,
+                       controller_interface::ControllerBase)

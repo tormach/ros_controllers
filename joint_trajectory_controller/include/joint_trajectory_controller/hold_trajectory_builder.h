@@ -34,27 +34,28 @@
 
 namespace joint_trajectory_controller
 {
-
 /**
  * @brief Builder creating a trajectory "simply" holding (without motion)
  * the specified position.
  */
-template<class SegmentImpl, class HardwareInterface>
+template <class SegmentImpl, class HardwareInterface>
 class HoldTrajectoryBuilder : public TrajectoryBuilder<SegmentImpl>
 {
 private:
-  using Segment               = JointTrajectorySegment<SegmentImpl>;
-  using TrajectoryPerJoint    = std::vector<Segment>;
-  using Trajectory            = std::vector<TrajectoryPerJoint>;
+  using Segment = JointTrajectorySegment<SegmentImpl>;
+  using TrajectoryPerJoint = std::vector<Segment>;
+  using Trajectory = std::vector<TrajectoryPerJoint>;
 
-  using RealtimeGoalHandle    = realtime_tools::RealtimeServerGoalHandle<control_msgs::FollowJointTrajectoryAction>;
+  using RealtimeGoalHandle = realtime_tools::RealtimeServerGoalHandle<
+      control_msgs::FollowJointTrajectoryAction>;
   using RealtimeGoalHandlePtr = boost::shared_ptr<RealtimeGoalHandle>;
 
   using JointHandle = typename HardwareInterface::ResourceHandleType;
 
 public:
-  //! @param joints Handles to the controlled joints. Stored for obtaining the current positions at any time.
-  HoldTrajectoryBuilder(const std::vector<JointHandle>&  joints);
+  //! @param joints Handles to the controlled joints. Stored for obtaining the
+  //! current positions at any time.
+  HoldTrajectoryBuilder(const std::vector<JointHandle>& joints);
 
 public:
   /**
@@ -63,50 +64,55 @@ public:
   bool buildTrajectory(Trajectory* hold_traj) override;
 
 private:
-  const std::vector<JointHandle>&  joints_;
+  const std::vector<JointHandle>& joints_;
 
-private: //Pre-allocated memory for real time usage of build function
-  typename Segment::State hold_start_state_ {typename Segment::State(1)};
-  typename Segment::State hold_end_state_   {typename Segment::State(1)};
-
+private:  // Pre-allocated memory for real time usage of build function
+  typename Segment::State hold_start_state_{ typename Segment::State(1) };
+  typename Segment::State hold_end_state_{ typename Segment::State(1) };
 };
 
-template<class SegmentImpl, class HardwareInterface>
-HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::HoldTrajectoryBuilder(const std::vector<JointHandle>& joints)
+template <class SegmentImpl, class HardwareInterface>
+HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::HoldTrajectoryBuilder(
+    const std::vector<JointHandle>& joints)
   : joints_(joints)
 {
-
 }
 
-template<class SegmentImpl, class HardwareInterface>
-bool HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::buildTrajectory(Trajectory* hold_traj)
+template <class SegmentImpl, class HardwareInterface>
+bool HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::buildTrajectory(
+    Trajectory* hold_traj)
 {
-  if(!TrajectoryBuilder<SegmentImpl>::getStartTime())
+  if (!TrajectoryBuilder<SegmentImpl>::getStartTime())
   {
     return false;
   }
 
-  if(!TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(hold_traj, joints_.size(), 1))
+  if (!TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(hold_traj,
+                                                         joints_.size(), 1))
   {
     return false;
   }
 
-  const typename Segment::Time start_time {TrajectoryBuilder<SegmentImpl>::getStartTime().value()};
-  RealtimeGoalHandlePtr goal_handle {TrajectoryBuilder<SegmentImpl>::createGoalHandlePtr()};
-  for (unsigned int joint_index = 0; joint_index < joints_.size(); ++joint_index)
+  const typename Segment::Time start_time{
+    TrajectoryBuilder<SegmentImpl>::getStartTime().value()
+  };
+  RealtimeGoalHandlePtr goal_handle{
+    TrajectoryBuilder<SegmentImpl>::createGoalHandlePtr()
+  };
+  for (unsigned int joint_index = 0; joint_index < joints_.size();
+       ++joint_index)
   {
-    hold_start_state_.position[0]     =  joints_[joint_index].getPosition();
-    hold_start_state_.velocity[0]     =  0.0;
-    hold_start_state_.acceleration[0] =  0.0;
+    hold_start_state_.position[0] = joints_[joint_index].getPosition();
+    hold_start_state_.velocity[0] = 0.0;
+    hold_start_state_.acceleration[0] = 0.0;
 
-    Segment& segment {(*hold_traj)[joint_index].front()};
-    segment.init(start_time, hold_start_state_,
-                 start_time, hold_start_state_);
+    Segment& segment{ (*hold_traj)[joint_index].front() };
+    segment.init(start_time, hold_start_state_, start_time, hold_start_state_);
     segment.setGoalHandle(goal_handle);
   }
   return true;
 }
 
-}
+}  // namespace joint_trajectory_controller
 
-#endif // HOLD_TRAJECTORY_BUILDER_H
+#endif  // HOLD_TRAJECTORY_BUILDER_H

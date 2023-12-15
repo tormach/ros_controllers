@@ -30,7 +30,6 @@
 
 #pragma once
 
-
 #include <algorithm>
 #include <cmath>
 #include <mutex>
@@ -49,24 +48,30 @@
 
 // Floating-point value comparison threshold
 const double EPS = 0.01;
-const double POSITION_TOLERANCE = 0.01; // 1 cm-s precision
-const double VELOCITY_TOLERANCE = 0.02; // 2 cm-s-1 precision
-const double ANGULAR_VELOCITY_TOLERANCE = 0.05; // 3 deg-s-1 precision
-const double JERK_LINEAR_VELOCITY_TOLERANCE = 0.10; // 10 cm-s-1 precision
-const double JERK_ANGULAR_VELOCITY_TOLERANCE = 0.05; // 3 deg-s-1 precision
-const double ORIENTATION_TOLERANCE = 0.03; // 0.57 degree precision
+const double POSITION_TOLERANCE = 0.01;               // 1 cm-s precision
+const double VELOCITY_TOLERANCE = 0.02;               // 2 cm-s-1 precision
+const double ANGULAR_VELOCITY_TOLERANCE = 0.05;       // 3 deg-s-1 precision
+const double JERK_LINEAR_VELOCITY_TOLERANCE = 0.10;   // 10 cm-s-1 precision
+const double JERK_ANGULAR_VELOCITY_TOLERANCE = 0.05;  // 3 deg-s-1 precision
+const double ORIENTATION_TOLERANCE = 0.03;            // 0.57 degree precision
 
 class AckermannSteeringControllerTest : public ::testing::Test
 {
 public:
-
   AckermannSteeringControllerTest()
-  : cmd_pub(nh.advertise<geometry_msgs::Twist>("cmd_vel", 100))
-  , odom_sub(nh.subscribe("odom", 100, &AckermannSteeringControllerTest::odomCallback, this))
-  , start_srv(nh.serviceClient<std_srvs::Empty>("start"))
-  , stop_srv(nh.serviceClient<std_srvs::Empty>("stop"))
-  , list_ctrls_srv(nh.serviceClient<controller_manager_msgs::ListControllers>("/controller_manager/list_controllers"))
-  , ctrl_name("ackermann_steering_bot_controller")
+    : cmd_pub(nh.advertise<geometry_msgs::Twist>("cmd_vel", 100))
+    , odom_sub(nh.subscribe(
+          "odom", 100, &AckermannSteeringControllerTest::odomCallback, this))
+    , start_srv(nh.serviceClient<std_srvs::Empty>("start"))
+    , stop_srv(nh.serviceClient<std_srvs::Empty>("stop"))
+    , list_ctrls_srv(
+          nh.serviceClient<controller_manager_msgs::ListControllers>("/controll"
+                                                                     "er_"
+                                                                     "manager/"
+                                                                     "list_"
+                                                                     "controlle"
+                                                                     "rs"))
+    , ctrl_name("ackermann_steering_bot_controller")
   {
   }
 
@@ -95,7 +100,10 @@ public:
     return true;
   }
 
-  void publish(geometry_msgs::Twist cmd_vel){ cmd_pub.publish(cmd_vel); }
+  void publish(geometry_msgs::Twist cmd_vel)
+  {
+    cmd_pub.publish(cmd_vel);
+  }
 
   bool isControllerAlive()
   {
@@ -103,17 +111,25 @@ public:
     list_ctrls_srv.call(srv);
 
     auto ctrl_list = srv.response.controller;
-    auto is_running = [this](const controller_manager_msgs::ControllerState& ctrl)
-    {
-      return ctrl.name == ctrl_name && ctrl.state == "running";
-    };
+    auto is_running =
+        [this](const controller_manager_msgs::ControllerState& ctrl) {
+          return ctrl.name == ctrl_name && ctrl.state == "running";
+        };
     bool running = std::any_of(ctrl_list.begin(), ctrl_list.end(), is_running);
     bool subscribing = cmd_pub.getNumSubscribers() > 0;
     return running && subscribing;
   }
 
-  void start(){ std_srvs::Empty srv; start_srv.call(srv); }
-  void stop(){ std_srvs::Empty srv; stop_srv.call(srv); }
+  void start()
+  {
+    std_srvs::Empty srv;
+    start_srv.call(srv);
+  }
+  void stop()
+  {
+    std_srvs::Empty srv;
+    stop_srv.call(srv);
+  }
 
 private:
   ros::NodeHandle nh;
@@ -131,10 +147,11 @@ private:
 
   void odomCallback(const nav_msgs::Odometry& odom)
   {
-    ROS_INFO_STREAM("Callback reveived: pos.x: " << odom.pose.pose.position.x
-                     << ", orient.z: " << odom.pose.pose.orientation.z
-                     << ", lin_est: " << odom.twist.twist.linear.x
-                     << ", ang_est: " << odom.twist.twist.angular.z);
+    ROS_INFO_STREAM("Callback reveived: pos.x: "
+                    << odom.pose.pose.position.x
+                    << ", orient.z: " << odom.pose.pose.orientation.z
+                    << ", lin_est: " << odom.twist.twist.linear.x
+                    << ", ang_est: " << odom.twist.twist.angular.z);
     std::lock_guard<std::mutex> lock(odom_mutex);
     last_odom = odom;
   }

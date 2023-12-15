@@ -36,13 +36,11 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_command_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 
 namespace position_controllers
 {
-
 /**
  * \brief Joint Position Controller (linear or angular)
  *
@@ -56,6 +54,7 @@ namespace position_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64) : The joint position to apply
  */
-typedef forward_command_controller::ForwardCommandController<hardware_interface::PositionJointInterface>
-        JointPositionController;
-}
+typedef forward_command_controller::ForwardCommandController<
+    hardware_interface::PositionJointInterface>
+    JointPositionController;
+}  // namespace position_controllers

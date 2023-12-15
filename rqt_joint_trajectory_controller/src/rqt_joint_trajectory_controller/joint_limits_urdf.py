@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: E722
 
 # TODO: Use urdf_parser_py.urdf instead. I gave it a try, but got
 #  Exception: Required attribute not set in XML: upper
@@ -19,8 +20,9 @@ def get_joint_limits(key='robot_description', use_smallest_joint_limits=True):
     # https://github.com/ros/robot_model/blob/indigo-devel/
     # joint_state_publisher/joint_state_publisher/joint_state_publisher
     description = rospy.get_param(key)
-    robot = xml.dom.minidom.parseString(description)\
-        .getElementsByTagName('robot')[0]
+    robot = xml.dom.minidom.parseString(description).getElementsByTagName(
+        'robot'
+    )[0]
     free_joints = {}
     dependent_joints = {}
 
@@ -54,11 +56,13 @@ def get_joint_limits(key='robot_description', use_smallest_joint_limits=True):
             if use_small and len(safety_tags) == 1:
                 tag = safety_tags[0]
                 if tag.hasAttribute('soft_lower_limit'):
-                    minval = max(minval,
-                                 float(tag.getAttribute('soft_lower_limit')))
+                    minval = max(
+                        minval, float(tag.getAttribute('soft_lower_limit'))
+                    )
                 if tag.hasAttribute('soft_upper_limit'):
-                    maxval = min(maxval,
-                                 float(tag.getAttribute('soft_upper_limit')))
+                    maxval = min(
+                        maxval, float(tag.getAttribute('soft_upper_limit'))
+                    )
 
             mimic_tags = child.getElementsByTagName('mimic')
             if use_mimic and len(mimic_tags) == 1:

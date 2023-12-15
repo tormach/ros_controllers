@@ -29,7 +29,6 @@
 
 #pragma once
 
-
 // C++ standard
 #include <cassert>
 #include <stdexcept>
@@ -57,32 +56,35 @@
 
 namespace gripper_action_controller
 {
-
 /**
- * \brief Controller for executing a gripper command action for simple single-dof grippers.
+ * \brief Controller for executing a gripper command action for simple
+ * single-dof grippers.
  *
- * \tparam HardwareInterface Controller hardware interface. Currently \p hardware_interface::PositionJointInterface and
- * \p hardware_interface::EffortJointInterface are supported out-of-the-box.
+ * \tparam HardwareInterface Controller hardware interface. Currently \p
+ * hardware_interface::PositionJointInterface and \p
+ * hardware_interface::EffortJointInterface are supported out-of-the-box.
  */
 template <class HardwareInterface>
-class GripperActionController : public controller_interface::Controller<HardwareInterface>
+class GripperActionController
+  : public controller_interface::Controller<HardwareInterface>
 {
 public:
-
   /**
-   * \brief Store position and max effort in struct to allow easier realtime buffer usage
+   * \brief Store position and max effort in struct to allow easier realtime
+   * buffer usage
    */
   struct Commands
   {
-    double position_; // Last commanded position
-    double max_effort_; // Max allowed effort
+    double position_;    // Last commanded position
+    double max_effort_;  // Max allowed effort
   };
 
   GripperActionController();
 
   /** \name Non Real-Time Safe Functions
    *\{*/
-  bool init(HardwareInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+  bool init(HardwareInterface* hw, ros::NodeHandle& root_nh,
+            ros::NodeHandle& controller_nh);
   /*\}*/
 
   /** \name Real-Time Safe Functions
@@ -97,56 +99,63 @@ public:
   /*\}*/
 
   realtime_tools::RealtimeBuffer<Commands> command_;
-  Commands command_struct_, command_struct_rt_; // pre-allocated memory that is re-used to set the realtime buffer
+  Commands command_struct_,
+      command_struct_rt_;  // pre-allocated memory that is re-used to set the
+                           // realtime buffer
 
 private:
-
-  typedef actionlib::ActionServer<control_msgs::GripperCommandAction>                         ActionServer;
-  typedef std::shared_ptr<ActionServer>                                                       ActionServerPtr;
-  typedef ActionServer::GoalHandle                                                            GoalHandle;
-  typedef realtime_tools::RealtimeServerGoalHandle<control_msgs::GripperCommandAction>        RealtimeGoalHandle;
-  typedef boost::shared_ptr<RealtimeGoalHandle>                                               RealtimeGoalHandlePtr;
+  typedef actionlib::ActionServer<control_msgs::GripperCommandAction>
+      ActionServer;
+  typedef std::shared_ptr<ActionServer> ActionServerPtr;
+  typedef ActionServer::GoalHandle GoalHandle;
+  typedef realtime_tools::RealtimeServerGoalHandle<
+      control_msgs::GripperCommandAction>
+      RealtimeGoalHandle;
+  typedef boost::shared_ptr<RealtimeGoalHandle> RealtimeGoalHandlePtr;
 
   typedef HardwareInterfaceAdapter<HardwareInterface> HwIfaceAdapter;
 
-  bool                                          update_hold_position_;
+  bool update_hold_position_;
 
-  bool                                         verbose_;            ///< Hard coded verbose flag to help in debugging
-  std::string                                  name_;               ///< Controller name.
-  hardware_interface::JointHandle joint_;                          ///< Handles to controlled joints.
-  std::string                     joint_name_;                      ///< Controlled joint names.
+  bool verbose_;      ///< Hard coded verbose flag to help in debugging
+  std::string name_;  ///< Controller name.
+  hardware_interface::JointHandle joint_;  ///< Handles to controlled joints.
+  std::string joint_name_;                 ///< Controlled joint names.
 
-  HwIfaceAdapter                               hw_iface_adapter_;   ///< Adapts desired goal state to HW interface.
+  HwIfaceAdapter hw_iface_adapter_;  ///< Adapts desired goal state to HW
+                                     ///< interface.
 
-  RealtimeGoalHandlePtr                        rt_active_goal_;     ///< Currently active action goal, if any.
-  control_msgs::GripperCommandResultPtr        pre_alloc_result_;
+  RealtimeGoalHandlePtr rt_active_goal_;  ///< Currently active action goal, if
+                                          ///< any.
+  control_msgs::GripperCommandResultPtr pre_alloc_result_;
 
   ros::Duration action_monitor_period_;
 
   // ROS API
-  ros::NodeHandle    controller_nh_;
-  ActionServerPtr    action_server_;
+  ros::NodeHandle controller_nh_;
+  ActionServerPtr action_server_;
 
-  ros::Timer         goal_handle_timer_;
+  ros::Timer goal_handle_timer_;
 
   void goalCB(GoalHandle gh);
   void cancelCB(GoalHandle gh);
   void preemptActiveGoal();
   void setHoldPosition(const ros::Time& time);
 
-  ros::Time last_movement_time_;                                    ///< Store stall time
-  double computed_command_;                                         ///< Computed command
+  ros::Time last_movement_time_;  ///< Store stall time
+  double computed_command_;       ///< Computed command
 
-  double stall_timeout_, stall_velocity_threshold_;                 ///< Stall related parameters
-  double default_max_effort_;                                       ///< Max allowed effort
+  double stall_timeout_,
+      stall_velocity_threshold_;  ///< Stall related parameters
+  double default_max_effort_;     ///< Max allowed effort
   double goal_tolerance_;
   /**
    * \brief Check for success and publish appropriate result and feedback.
    **/
-  void checkForSuccess(const ros::Time& time, double error_position, double current_position, double current_velocity);
-
+  void checkForSuccess(const ros::Time& time, double error_position,
+                       double current_position, double current_velocity);
 };
 
-} // namespace
+}  // namespace gripper_action_controller
 
 #include <gripper_action_controller/gripper_action_controller_impl.h>

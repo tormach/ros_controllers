@@ -21,18 +21,18 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>controller_interface</depend> 
-  <depend>realtime_tools</depend> 
-  <depend>roscpp</depend> 
+  <depend>controller_interface</depend>
+  <depend>realtime_tools</depend>
+  <depend>roscpp</depend>
 
-  <build_depend>geometry_msgs</build_depend> 
-  <build_depend>hardware_interface</build_depend> 
-  <build_depend>pluginlib</build_depend> 
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>hardware_interface</build_depend>
+  <build_depend>pluginlib</build_depend>
 
-  <build_export_depend>geometry_msgs</build_export_depend> 
-  <build_export_depend>hardware_interface</build_export_depend> 
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>hardware_interface</build_export_depend>
 
-  <exec_depend>controller_manager</exec_depend> 
+  <exec_depend>controller_manager</exec_depend>
 
   <export>
     <controller_interface plugin="${prefix}/force_torque_sensor_plugin.xml"/>

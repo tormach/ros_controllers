@@ -59,7 +59,7 @@ class DoubleEditor(QWidget):
     valueChanged = Signal(float)
 
     def __init__(self, min_val, max_val):
-        super(DoubleEditor, self).__init__()
+        super().__init__()
 
         # Preconditions
         assert min_val < max_val
@@ -70,15 +70,19 @@ class DoubleEditor(QWidget):
 
         # Load editor UI
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('rqt_joint_trajectory_controller'),
-                               'resource', 'double_editor.ui')
+        ui_file = os.path.join(
+            rp.get_path('rqt_joint_trajectory_controller'),
+            'resource',
+            'double_editor.ui',
+        )
         loadUi(ui_file, self)
 
         # Setup widget ranges and slider scale factor
         self.slider.setRange(0, 100)
         self.slider.setSingleStep(1)
-        self._scale = (max_val - min_val) / \
-                      (self.slider.maximum() - self.slider.minimum())
+        self._scale = (max_val - min_val) / (
+            self.slider.maximum() - self.slider.minimum()
+        )
         self.spin_box.setRange(min_val, max_val)
         self.spin_box.setSingleStep(self._scale)
 
@@ -93,8 +97,9 @@ class DoubleEditor(QWidget):
         return self._min_val + self._scale * (sval - self.slider.minimum())
 
     def _val_to_slider(self, val):
-        return round(self.slider.minimum() + (val - self._min_val) /
-                     self._scale)
+        return round(
+            self.slider.minimum() + (val - self._min_val) / self._scale
+        )
 
     def _on_slider_changed(self):
         val = self._slider_to_val(self.slider.value())

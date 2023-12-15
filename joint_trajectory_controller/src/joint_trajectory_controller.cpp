@@ -35,61 +35,71 @@
 
 namespace position_controllers
 {
-  /**
-   * \brief Joint trajectory controller that represents trajectory segments as <b>quintic splines</b> and sends
-   * commands to a \b position interface.
-   */
-  typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interface::QuinticSplineSegment<double>,
-                                                                 hardware_interface::PositionJointInterface>
-          JointTrajectoryController;
-}
+/**
+ * \brief Joint trajectory controller that represents trajectory segments as
+ * <b>quintic splines</b> and sends commands to a \b position interface.
+ */
+typedef joint_trajectory_controller::JointTrajectoryController<
+    trajectory_interface::QuinticSplineSegment<double>,
+    hardware_interface::PositionJointInterface>
+    JointTrajectoryController;
+}  // namespace position_controllers
 
 namespace velocity_controllers
 {
-  /**
-   * \brief Joint trajectory controller that represents trajectory segments as <b>quintic splines</b> and sends
-   * commands to a \b velocity interface.
-   */
-  typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interface::QuinticSplineSegment<double>,
-                                                                 hardware_interface::VelocityJointInterface>
-          JointTrajectoryController;
-}
+/**
+ * \brief Joint trajectory controller that represents trajectory segments as
+ * <b>quintic splines</b> and sends commands to a \b velocity interface.
+ */
+typedef joint_trajectory_controller::JointTrajectoryController<
+    trajectory_interface::QuinticSplineSegment<double>,
+    hardware_interface::VelocityJointInterface>
+    JointTrajectoryController;
+}  // namespace velocity_controllers
 
 namespace effort_controllers
 {
-  /**
-   * \brief Joint trajectory controller that represents trajectory segments as <b>quintic splines</b> and sends
-   * commands to an \b effort interface.
-   */
-  typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interface::QuinticSplineSegment<double>,
-                                                                 hardware_interface::EffortJointInterface>
-          JointTrajectoryController;
-}
+/**
+ * \brief Joint trajectory controller that represents trajectory segments as
+ * <b>quintic splines</b> and sends commands to an \b effort interface.
+ */
+typedef joint_trajectory_controller::JointTrajectoryController<
+    trajectory_interface::QuinticSplineSegment<double>,
+    hardware_interface::EffortJointInterface>
+    JointTrajectoryController;
+}  // namespace effort_controllers
 
 namespace pos_vel_controllers
 {
-  /**
-   * \brief Joint trajectory controller that represents trajectory segments as <b>quintic splines</b> and sends
-   * commands to an \b pos_vel interface.
-   */
-  typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interface::QuinticSplineSegment<double>,
-                                                                 hardware_interface::PosVelJointInterface>
-          JointTrajectoryController;
-}
+/**
+ * \brief Joint trajectory controller that represents trajectory segments as
+ * <b>quintic splines</b> and sends commands to an \b pos_vel interface.
+ */
+typedef joint_trajectory_controller::JointTrajectoryController<
+    trajectory_interface::QuinticSplineSegment<double>,
+    hardware_interface::PosVelJointInterface>
+    JointTrajectoryController;
+}  // namespace pos_vel_controllers
 
 namespace pos_vel_acc_controllers
 {
-  /**
-   * \brief Joint trajectory controller that represents trajectory segments as <b>quintic splines</b> and sends
-   * commands to a \b pos_vel_acc interface.
-   */
-  typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interface::QuinticSplineSegment<double>,
-                                                                 hardware_interface::PosVelAccJointInterface>
-          JointTrajectoryController;
-}
+/**
+ * \brief Joint trajectory controller that represents trajectory segments as
+ * <b>quintic splines</b> and sends commands to a \b pos_vel_acc interface.
+ */
+typedef joint_trajectory_controller::JointTrajectoryController<
+    trajectory_interface::QuinticSplineSegment<double>,
+    hardware_interface::PosVelAccJointInterface>
+    JointTrajectoryController;
+}  // namespace pos_vel_acc_controllers
 
-PLUGINLIB_EXPORT_CLASS(position_controllers::JointTrajectoryController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(velocity_controllers::JointTrajectoryController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(effort_controllers::JointTrajectoryController,   controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(pos_vel_controllers::JointTrajectoryController,   controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(pos_vel_acc_controllers::JointTrajectoryController,   controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(position_controllers::JointTrajectoryController,
+                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(velocity_controllers::JointTrajectoryController,
+                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(effort_controllers::JointTrajectoryController,
+                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(pos_vel_controllers::JointTrajectoryController,
+                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(pos_vel_acc_controllers::JointTrajectoryController,
+                       controller_interface::ControllerBase)

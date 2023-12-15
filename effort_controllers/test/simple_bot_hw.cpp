@@ -32,7 +32,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-
 #include <chrono>
 #include <cmath>
 #include <thread>
@@ -54,34 +53,35 @@ class SimpleBot : public hardware_interface::RobotHW
 public:
   static constexpr double period = 0.01;
 
-  SimpleBot()
-  : pos_(0.0)
-  , vel_(0.0)
-  , eff_(0.0)
-  , max_eff_(10.0)
-  , cmd_(0.0)
+  SimpleBot() : pos_(0.0), vel_(0.0), eff_(0.0), max_eff_(10.0), cmd_(0.0)
   {
     // joint state interface
-    hardware_interface::JointStateHandle state_handle("joint", &pos_, &vel_, &eff_);
+    hardware_interface::JointStateHandle state_handle("joint", &pos_, &vel_,
+                                                      &eff_);
     state_interface_.registerHandle(state_handle);
     registerInterface(&state_interface_);
     // effort interface
-    hardware_interface::JointHandle effort_handle(state_interface_.getHandle("joint"), &cmd_);
+    hardware_interface::JointHandle effort_handle(
+        state_interface_.getHandle("joint"), &cmd_);
     effort_interface_.registerHandle(effort_handle);
     registerInterface(&effort_interface_);
   }
 
-  void read() {
+  void read()
+  {
     // update current state
-    pos_ += period * vel_ + 0.5*std::pow(period, 2.0) * eff_;
+    pos_ += period * vel_ + 0.5 * std::pow(period, 2.0) * eff_;
     vel_ += period * eff_;
   }
 
-  void write() {
+  void write()
+  {
     // store current command
     eff_ = cmd_;
-    if(std::fabs(eff_) > max_eff_) {
-      ROS_WARN("Large effort command received: %f; cutting down to % f", eff_, max_eff_);
+    if (std::fabs(eff_) > max_eff_)
+    {
+      ROS_WARN("Large effort command received: %f; cutting down to % f", eff_,
+               max_eff_);
       eff_ = eff_ > 0.0 ? max_eff_ : -max_eff_;
     }
   }
@@ -93,32 +93,36 @@ private:
   double max_eff_;
 };
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "simple_bot_hw");
   ros::NodeHandle nh;
   SimpleBot bot;
-  ros::Publisher clock_publisher = nh.advertise<rosgraph_msgs::Clock>("/clock", 1);
+  ros::Publisher clock_publisher =
+      nh.advertise<rosgraph_msgs::Clock>("/clock", 1);
   nh.setParam("/use_sim_time", true);
   controller_manager::ControllerManager cm(&bot, nh);
   ros::AsyncSpinner spinner(2);
   spinner.start();
 
-  ros::Rate rate(1.0/bot.period);
+  ros::Rate rate(1.0 / bot.period);
   ros::Duration period(bot.period);
   double sim_time = 0.0;
 
   // main "simulation"
-  while(ros::ok()) {
+  while (ros::ok())
+  {
     auto begin = std::chrono::system_clock::now();
     bot.read();
     cm.update(ros::Time(sim_time), period);
     bot.write();
     auto end = std::chrono::system_clock::now();
-    double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >((end - begin)).count();
-    if(bot.period > elapsed)
-      std::this_thread::sleep_for(std::chrono::duration<double>(bot.period - elapsed));
+    double elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(
+                         (end - begin))
+                         .count();
+    if (bot.period > elapsed)
+      std::this_thread::sleep_for(
+          std::chrono::duration<double>(bot.period - elapsed));
     rosgraph_msgs::Clock clock;
     clock.clock = ros::Time(sim_time);
     clock_publisher.publish(clock);

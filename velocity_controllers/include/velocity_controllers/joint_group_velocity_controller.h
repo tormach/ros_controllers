@@ -37,15 +37,14 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_joint_group_command_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 
 namespace velocity_controllers
 {
-
 /**
- * \brief Forward command controller for a set of velocity controlled joints (linear or angular).
+ * \brief Forward command controller for a set of velocity controlled joints
+ * (linear or angular).
  *
  * This class forwards the commanded velocities down to a set of joints.
  *
@@ -57,7 +56,8 @@ namespace velocity_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64MultiArray) : The joint velocities to apply
  */
-typedef forward_command_controller::ForwardJointGroupCommandController<hardware_interface::VelocityJointInterface>
-        JointGroupVelocityController;
+typedef forward_command_controller::ForwardJointGroupCommandController<
+    hardware_interface::VelocityJointInterface>
+    JointGroupVelocityController;
 
-}
+}  // namespace velocity_controllers

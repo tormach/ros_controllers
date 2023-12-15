@@ -35,23 +35,27 @@
 
 namespace position_controllers
 {
-  /**
-   * \brief Gripper action controller that sends
-   * commands to a \b position interface.
-   */
-  typedef gripper_action_controller::GripperActionController<hardware_interface::PositionJointInterface>
-          GripperActionController;
-}
+/**
+ * \brief Gripper action controller that sends
+ * commands to a \b position interface.
+ */
+typedef gripper_action_controller::GripperActionController<
+    hardware_interface::PositionJointInterface>
+    GripperActionController;
+}  // namespace position_controllers
 
 namespace effort_controllers
 {
-  /**
-   * \brief Gripper action controller that sends
-   * commands to a \b effort interface.
-   */
-  typedef gripper_action_controller::GripperActionController<hardware_interface::EffortJointInterface>
-          GripperActionController;
-}
+/**
+ * \brief Gripper action controller that sends
+ * commands to a \b effort interface.
+ */
+typedef gripper_action_controller::GripperActionController<
+    hardware_interface::EffortJointInterface>
+    GripperActionController;
+}  // namespace effort_controllers
 
-PLUGINLIB_EXPORT_CLASS(position_controllers::GripperActionController, controller_interface::ControllerBase)
-PLUGINLIB_EXPORT_CLASS(effort_controllers::GripperActionController,   controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(position_controllers::GripperActionController,
+                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(effort_controllers::GripperActionController,
+                       controller_interface::ControllerBase)

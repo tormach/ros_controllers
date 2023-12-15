@@ -39,11 +39,12 @@ namespace internal
 std::string getLeafNamespace(const ros::NodeHandle& nh)
 {
   const std::string complete_ns = nh.getNamespace();
-  std::size_t id   = complete_ns.find_last_of("/");
+  std::size_t id = complete_ns.find_last_of("/");
   return complete_ns.substr(id + 1);
 }
 
-urdf::ModelSharedPtr getUrdf(const ros::NodeHandle& nh, const std::string& param_name)
+urdf::ModelSharedPtr getUrdf(const ros::NodeHandle& nh,
+                             const std::string& param_name)
 {
   urdf::ModelSharedPtr urdf(new urdf::Model);
 
@@ -53,21 +54,24 @@ urdf::ModelSharedPtr getUrdf(const ros::NodeHandle& nh, const std::string& param
   {
     if (!urdf->initString(urdf_str))
     {
-      ROS_ERROR_STREAM("Failed to parse URDF contained in '" << param_name << "' parameter (namespace: " <<
-        nh.getNamespace() << ").");
+      ROS_ERROR_STREAM("Failed to parse URDF contained in '"
+                       << param_name << "' parameter (namespace: "
+                       << nh.getNamespace() << ").");
       return urdf::ModelSharedPtr();
     }
   }
   // Check for robot_description in root
   else if (!urdf->initParam("robot_description"))
   {
-    ROS_ERROR_STREAM("Failed to parse URDF contained in '" << param_name << "' parameter");
+    ROS_ERROR_STREAM("Failed to parse URDF contained in '" << param_name
+                                                           << "' parameter");
     return urdf::ModelSharedPtr();
   }
   return urdf;
 }
 
-std::vector<urdf::JointConstSharedPtr> getUrdfJoints(const urdf::Model& urdf, const std::vector<std::string>& joint_names)
+std::vector<urdf::JointConstSharedPtr> getUrdfJoints(
+    const urdf::Model& urdf, const std::vector<std::string>& joint_names)
 {
   std::vector<urdf::JointConstSharedPtr> out;
   for (const auto& joint_name : joint_names)
@@ -79,18 +83,19 @@ std::vector<urdf::JointConstSharedPtr> getUrdfJoints(const urdf::Model& urdf, co
     }
     else
     {
-      ROS_ERROR_STREAM("Could not find joint '" << joint_name << "' in URDF model.");
+      ROS_ERROR_STREAM("Could not find joint '" << joint_name
+                                                << "' in URDF model.");
       return std::vector<urdf::JointConstSharedPtr>();
     }
   }
   return out;
 }
 
-} // namespace
+}  // namespace internal
 
 template <class HardwareInterface>
-inline void GripperActionController<HardwareInterface>::
-starting(const ros::Time& time)
+inline void
+GripperActionController<HardwareInterface>::starting(const ros::Time& time)
 {
   command_struct_rt_.position_ = joint_.getPosition();
   command_struct_rt_.max_effort_ = default_max_effort_;
@@ -102,15 +107,14 @@ starting(const ros::Time& time)
 }
 
 template <class HardwareInterface>
-inline void GripperActionController<HardwareInterface>::
-stopping(const ros::Time& time)
+inline void
+GripperActionController<HardwareInterface>::stopping(const ros::Time& time)
 {
   preemptActiveGoal();
 }
 
 template <class HardwareInterface>
-inline void GripperActionController<HardwareInterface>::
-preemptActiveGoal()
+inline void GripperActionController<HardwareInterface>::preemptActiveGoal()
 {
   RealtimeGoalHandlePtr current_active_goal(rt_active_goal_);
 
@@ -119,21 +123,22 @@ preemptActiveGoal()
   {
     // Marks the current goal as canceled
     rt_active_goal_.reset();
-    if(current_active_goal->gh_.getGoalStatus().status == actionlib_msgs::GoalStatus::ACTIVE)
+    if (current_active_goal->gh_.getGoalStatus().status ==
+        actionlib_msgs::GoalStatus::ACTIVE)
       current_active_goal->gh_.setCanceled();
   }
 }
 
 template <class HardwareInterface>
-GripperActionController<HardwareInterface>::
-GripperActionController()
-: verbose_(false) // Set to true during debugging
-{}
+GripperActionController<HardwareInterface>::GripperActionController()
+  : verbose_(false)  // Set to true during debugging
+{
+}
 
 template <class HardwareInterface>
-bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
-						      ros::NodeHandle&   root_nh,
-						      ros::NodeHandle&   controller_nh)
+bool GripperActionController<HardwareInterface>::init(
+    HardwareInterface* hw, ros::NodeHandle& root_nh,
+    ros::NodeHandle& controller_nh)
 {
   using namespace internal;
 
@@ -147,7 +152,8 @@ bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
   double action_monitor_rate = 20.0;
   controller_nh_.getParam("action_monitor_rate", action_monitor_rate);
   action_monitor_period_ = ros::Duration(1.0 / action_monitor_rate);
-  ROS_DEBUG_STREAM_NAMED(name_, "Action status changes will be monitored at " << action_monitor_rate << "Hz.");
+  ROS_DEBUG_STREAM_NAMED(name_, "Action status changes will be monitored at "
+                                    << action_monitor_rate << "Hz.");
 
   // Controlled joint
   controller_nh_.getParam("joint", joint_name_);
@@ -166,7 +172,8 @@ bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
 
   std::vector<std::string> joint_names;
   joint_names.push_back(joint_name_);
-  std::vector<urdf::JointConstSharedPtr> urdf_joints = getUrdfJoints(*urdf, joint_names);
+  std::vector<urdf::JointConstSharedPtr> urdf_joints =
+      getUrdfJoints(*urdf, joint_names);
   if (urdf_joints.empty())
   {
     return false;
@@ -180,14 +187,18 @@ bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
   }
   catch (...)
   {
-    ROS_ERROR_STREAM_NAMED(name_, "Could not find joint '" << joint_name_ << "' in '" <<
-			   this->getHardwareInterfaceType() << "'.");
+    ROS_ERROR_STREAM_NAMED(name_, "Could not find joint '"
+                                      << joint_name_ << "' in '"
+                                      << this->getHardwareInterfaceType()
+                                      << "'.");
     return false;
   }
 
-  ROS_DEBUG_STREAM_NAMED(name_, "Initialized controller '" << name_ << "' with:" <<
-			 "\n- Hardware interface type: '" << this->getHardwareInterfaceType() << "'" <<
-			 "\n");
+  ROS_DEBUG_STREAM_NAMED(name_, "Initialized controller '"
+                                    << name_ << "' with:"
+                                    << "\n- Hardware interface type: '"
+                                    << this->getHardwareInterfaceType() << "'"
+                                    << "\n");
 
   // Default tolerances
   controller_nh_.param<double>("goal_tolerance", goal_tolerance_, 0.01);
@@ -196,7 +207,8 @@ bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
   controller_nh_.param<double>("max_effort", default_max_effort_, 0.0);
   default_max_effort_ = fabs(default_max_effort_);
   // Stall - stall velocity threshold, stall timeout
-  controller_nh_.param<double>("stall_velocity_threshold", stall_velocity_threshold_, 0.001);
+  controller_nh_.param<double>("stall_velocity_threshold",
+                               stall_velocity_threshold_, 0.001);
   controller_nh_.param<double>("stall_timeout", stall_timeout_, 1.0);
 
   // Hardware interface adapter
@@ -213,17 +225,17 @@ bool GripperActionController<HardwareInterface>::init(HardwareInterface* hw,
   pre_alloc_result_->stalled = false;
 
   // ROS API: Action interface
-  action_server_.reset(new ActionServer(controller_nh_, "gripper_cmd",
-					boost::bind(&GripperActionController::goalCB,   this, _1),
-					boost::bind(&GripperActionController::cancelCB, this, _1),
-					false));
+  action_server_.reset(new ActionServer(
+      controller_nh_, "gripper_cmd",
+      boost::bind(&GripperActionController::goalCB, this, _1),
+      boost::bind(&GripperActionController::cancelCB, this, _1), false));
   action_server_->start();
   return true;
 }
 
 template <class HardwareInterface>
-void GripperActionController<HardwareInterface>::
-update(const ros::Time& time, const ros::Duration& period)
+void GripperActionController<HardwareInterface>::update(
+    const ros::Time& time, const ros::Duration& period)
 {
   command_struct_rt_ = *(command_.readFromRT());
 
@@ -231,26 +243,26 @@ update(const ros::Time& time, const ros::Duration& period)
   double current_velocity = joint_.getVelocity();
 
   double error_position = command_struct_rt_.position_ - current_position;
-  double error_velocity = - current_velocity;
+  double error_velocity = -current_velocity;
 
   checkForSuccess(time, error_position, current_position, current_velocity);
 
   // Hardware interface adapter: Generate and send commands
-  computed_command_ = hw_iface_adapter_.updateCommand(time, period,
-						      command_struct_rt_.position_, 0.0,
-						      error_position, error_velocity, command_struct_rt_.max_effort_);
+  computed_command_ = hw_iface_adapter_.updateCommand(
+      time, period, command_struct_rt_.position_, 0.0, error_position,
+      error_velocity, command_struct_rt_.max_effort_);
 }
 
 template <class HardwareInterface>
-void GripperActionController<HardwareInterface>::
-goalCB(GoalHandle gh)
+void GripperActionController<HardwareInterface>::goalCB(GoalHandle gh)
 {
-  ROS_DEBUG_STREAM_NAMED(name_,"Recieved new action goal");
+  ROS_DEBUG_STREAM_NAMED(name_, "Recieved new action goal");
 
   // Precondition: Running controller
   if (!this->isRunning())
   {
-    ROS_ERROR_NAMED(name_, "Can't accept new action goals. Controller is not running.");
+    ROS_ERROR_NAMED(name_, "Can't accept new action goals. Controller is not "
+                           "running.");
     control_msgs::GripperCommandResult result;
     gh.setRejected(result);
     return;
@@ -275,16 +287,14 @@ goalCB(GoalHandle gh)
   last_movement_time_ = ros::Time::now();
 
   // Setup goal status checking timer
-  goal_handle_timer_ = controller_nh_.createTimer(action_monitor_period_,
-                                                  &RealtimeGoalHandle::runNonRealtime,
-                                                  rt_goal);
+  goal_handle_timer_ = controller_nh_.createTimer(
+      action_monitor_period_, &RealtimeGoalHandle::runNonRealtime, rt_goal);
   goal_handle_timer_.start();
   rt_active_goal_ = rt_goal;
 }
 
 template <class HardwareInterface>
-void GripperActionController<HardwareInterface>::
-cancelCB(GoalHandle gh)
+void GripperActionController<HardwareInterface>::cancelCB(GoalHandle gh)
 {
   RealtimeGoalHandlePtr current_active_goal(rt_active_goal_);
 
@@ -296,7 +306,8 @@ cancelCB(GoalHandle gh)
 
     // Enter hold current position mode
     setHoldPosition(ros::Time(0.0));
-    ROS_DEBUG_NAMED(name_, "Canceling active action goal because cancel callback recieved from actionlib.");
+    ROS_DEBUG_NAMED(name_, "Canceling active action goal because cancel "
+                           "callback recieved from actionlib.");
 
     // Mark the current goal as canceled
     current_active_goal->gh_.setCanceled();
@@ -304,8 +315,8 @@ cancelCB(GoalHandle gh)
 }
 
 template <class HardwareInterface>
-void GripperActionController<HardwareInterface>::
-setHoldPosition(const ros::Time& time)
+void GripperActionController<HardwareInterface>::setHoldPosition(
+    const ros::Time& time)
 {
   command_struct_.position_ = joint_.getPosition();
   command_struct_.max_effort_ = default_max_effort_;
@@ -313,18 +324,20 @@ setHoldPosition(const ros::Time& time)
 }
 
 template <class HardwareInterface>
-void GripperActionController<HardwareInterface>::
-checkForSuccess(const ros::Time& time, double error_position, double current_position, double current_velocity)
+void GripperActionController<HardwareInterface>::checkForSuccess(
+    const ros::Time& time, double error_position, double current_position,
+    double current_velocity)
 {
   RealtimeGoalHandlePtr current_active_goal(rt_active_goal_);
 
-  if(!current_active_goal)
+  if (!current_active_goal)
     return;
 
-  if(current_active_goal->gh_.getGoalStatus().status != actionlib_msgs::GoalStatus::ACTIVE)
+  if (current_active_goal->gh_.getGoalStatus().status !=
+      actionlib_msgs::GoalStatus::ACTIVE)
     return;
 
-  if(fabs(error_position) < goal_tolerance_)
+  if (fabs(error_position) < goal_tolerance_)
   {
     pre_alloc_result_->effort = computed_command_;
     pre_alloc_result_->position = current_position;
@@ -334,11 +347,11 @@ checkForSuccess(const ros::Time& time, double error_position, double current_pos
   }
   else
   {
-    if(fabs(current_velocity) > stall_velocity_threshold_)
+    if (fabs(current_velocity) > stall_velocity_threshold_)
     {
       last_movement_time_ = time;
     }
-    else if( (time - last_movement_time_).toSec() > stall_timeout_)
+    else if ((time - last_movement_time_).toSec() > stall_timeout_)
     {
       pre_alloc_result_->effort = computed_command_;
       pre_alloc_result_->position = current_position;
@@ -349,4 +362,4 @@ checkForSuccess(const ros::Time& time, double error_position, double current_pos
   }
 }
 
-} // namespace
+}  // namespace gripper_action_controller

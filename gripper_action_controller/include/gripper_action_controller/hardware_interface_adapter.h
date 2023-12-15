@@ -30,7 +30,6 @@
 
 #pragma once
 
-
 #include <cassert>
 #include <string>
 #include <vector>
@@ -43,7 +42,8 @@
 #include <hardware_interface/joint_command_interface.h>
 
 /**
- * \brief Helper class to simplify integrating the GripperActionController with different hardware interfaces.
+ * \brief Helper class to simplify integrating the GripperActionController with
+ * different hardware interfaces.
  *
  * The GripperActionController outputs position while
  * it is supposed to work with either position or effort commands.
@@ -53,34 +53,42 @@ template <class HardwareInterface>
 class HardwareInterfaceAdapter
 {
 public:
-  bool init(hardware_interface::JointHandle& joint_handle, ros::NodeHandle& controller_nh)
+  bool init(hardware_interface::JointHandle& joint_handle,
+            ros::NodeHandle& controller_nh)
   {
     return false;
   }
 
-  void starting(const ros::Time& time) {}
-  void stopping(const ros::Time& time) {}
+  void starting(const ros::Time& time)
+  {
+  }
+  void stopping(const ros::Time& time)
+  {
+  }
 
-  double updateCommand(const ros::Time&     time,
-		       const ros::Duration& period,
-		       double desired_position,
-		       double desired_velocity,
-		       double error_position,
-		       double error_velocity,
-		       double max_allowed_effort) { return 0.0;}
-
+  double updateCommand(const ros::Time& time, const ros::Duration& period,
+                       double desired_position, double desired_velocity,
+                       double error_position, double error_velocity,
+                       double max_allowed_effort)
+  {
+    return 0.0;
+  }
 };
 
 /**
- * \brief Adapter for a position-controlled hardware interface. Forwards desired positions as commands.
+ * \brief Adapter for a position-controlled hardware interface. Forwards desired
+ * positions as commands.
  */
-template<>
+template <>
 class HardwareInterfaceAdapter<hardware_interface::PositionJointInterface>
 {
 public:
-  HardwareInterfaceAdapter() : joint_handle_ptr_(nullptr) {}
+  HardwareInterfaceAdapter() : joint_handle_ptr_(nullptr)
+  {
+  }
 
-  bool init(hardware_interface::JointHandle& joint_handle, ros::NodeHandle& controller_nh)
+  bool init(hardware_interface::JointHandle& joint_handle,
+            ros::NodeHandle& controller_nh)
   {
     // Store pointer to joint handles
     joint_handle_ptr_ = &joint_handle;
@@ -88,16 +96,17 @@ public:
     return true;
   }
 
-  void starting(const ros::Time& time) {}
-  void stopping(const ros::Time& time) {}
+  void starting(const ros::Time& time)
+  {
+  }
+  void stopping(const ros::Time& time)
+  {
+  }
 
-  double updateCommand(const ros::Time&     /*time*/,
-		       const ros::Duration& period,
-		       double desired_position,
-		       double desired_velocity,
-		       double error_position,
-		       double error_velocity,
-		       double max_allowed_effort)
+  double updateCommand(const ros::Time& /*time*/, const ros::Duration& period,
+                       double desired_position, double desired_velocity,
+                       double error_position, double error_velocity,
+                       double max_allowed_effort)
   {
     // Forward desired position to command
     (*joint_handle_ptr_).setCommand(desired_position);
@@ -109,14 +118,12 @@ private:
 };
 
 /**
- * \brief Adapter for an effort-controlled hardware interface. Maps position and velocity errors to effort commands
- * through a position PID loop.
+ * \brief Adapter for an effort-controlled hardware interface. Maps position and
+ * velocity errors to effort commands through a position PID loop.
  *
- * The following is an example configuration of a controller that uses this adapter. Notice the \p gains entry:
- * \code
- * gripper_controller:
- *   type: "gripper_action_controller/GripperActionController"
- *   joints: gripper_joint
+ * The following is an example configuration of a controller that uses this
+ * adapter. Notice the \p gains entry: \code gripper_controller: type:
+ * "gripper_action_controller/GripperActionController" joints: gripper_joint
  *   goal_tolerance: 0.01
  *   stalled_velocity_threshold: 0.01
  *   stall_timeout: 0.2
@@ -124,25 +131,30 @@ private:
  *     gripper_joint: {p: 200, d: 1, i: 5, i_clamp: 1}
  * \endcode
  */
-template<>
+template <>
 class HardwareInterfaceAdapter<hardware_interface::EffortJointInterface>
 {
 public:
-  HardwareInterfaceAdapter() : joint_handle_ptr_(nullptr) {}
+  HardwareInterfaceAdapter() : joint_handle_ptr_(nullptr)
+  {
+  }
 
-  bool init(hardware_interface::JointHandle& joint_handle, ros::NodeHandle& controller_nh)
+  bool init(hardware_interface::JointHandle& joint_handle,
+            ros::NodeHandle& controller_nh)
   {
     // Store pointer to joint handles
     joint_handle_ptr_ = &joint_handle;
 
     // Initialize PIDs
-    ros::NodeHandle joint_nh(controller_nh, std::string("gains/") + joint_handle.getName());
+    ros::NodeHandle joint_nh(controller_nh,
+                             std::string("gains/") + joint_handle.getName());
 
     // Init PID gains from ROS parameter server
     pid_.reset(new control_toolbox::Pid());
     if (!pid_->init(joint_nh))
     {
-      ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter server.");
+      ROS_WARN_STREAM("Failed to initialize PID gains from ROS parameter "
+                      "server.");
       return false;
     }
 
@@ -160,24 +172,29 @@ public:
     (*joint_handle_ptr_).setCommand(0.0);
   }
 
-  void stopping(const ros::Time& time) {}
+  void stopping(const ros::Time& time)
+  {
+  }
 
-  double updateCommand(const ros::Time&     /*time*/,
-		       const ros::Duration& period,
-		       double desired_position,
-		       double desired_velocity,
-		       double error_position,
-		       double error_velocity,
-		       double max_allowed_effort)
+  double updateCommand(const ros::Time& /*time*/, const ros::Duration& period,
+                       double desired_position, double desired_velocity,
+                       double error_position, double error_velocity,
+                       double max_allowed_effort)
   {
     // Preconditions
-    if (!joint_handle_ptr_) {return 0.0;}
+    if (!joint_handle_ptr_)
+    {
+      return 0.0;
+    }
 
     // Update PIDs
-      double command = pid_->computeCommand(error_position, error_velocity, period);
-      command = std::min<double>(fabs(max_allowed_effort), std::max<double>(-fabs(max_allowed_effort), command));
-      (*joint_handle_ptr_).setCommand(command);
-      return command;
+    double command =
+        pid_->computeCommand(error_position, error_velocity, period);
+    command =
+        std::min<double>(fabs(max_allowed_effort),
+                         std::max<double>(-fabs(max_allowed_effort), command));
+    (*joint_handle_ptr_).setCommand(command);
+    return command;
   }
 
 private:

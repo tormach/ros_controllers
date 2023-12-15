@@ -36,13 +36,11 @@
 
 #pragma once
 
-
 #include <forward_command_controller/forward_command_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 
 namespace velocity_controllers
 {
-
 /**
  * \brief Joint Velocity Controller (linear or angular)
  *
@@ -56,7 +54,8 @@ namespace velocity_controllers
  * Subscribes to:
  * - \b command (std_msgs::Float64) : The joint velocity to apply
  */
-typedef forward_command_controller::ForwardCommandController<hardware_interface::VelocityJointInterface>
-        JointVelocityController;
+typedef forward_command_controller::ForwardCommandController<
+    hardware_interface::VelocityJointInterface>
+    JointVelocityController;
 
-}
+}  // namespace velocity_controllers

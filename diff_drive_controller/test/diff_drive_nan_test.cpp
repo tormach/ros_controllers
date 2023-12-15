@@ -33,7 +33,8 @@
 #include <limits>
 
 // TEST CASES
-TEST_F(DiffDriveControllerTest, testNaN) {
+TEST_F(DiffDriveControllerTest, testNaN)
+{
   // wait for ROS
   waitForController();
 
@@ -75,9 +76,11 @@ TEST_F(DiffDriveControllerTest, testNaN) {
   EXPECT_FALSE(std::isnan(odom.pose.pose.orientation.w));
 }
 
-TEST_F(DiffDriveControllerTest, testNaNCmd) {
+TEST_F(DiffDriveControllerTest, testNaNCmd)
+{
   // wait for ROS
-  while (!isControllerAlive()) {
+  while (!isControllerAlive())
+  {
     ros::Duration(0.1).sleep();
   }
   // zero everything before test
@@ -88,7 +91,8 @@ TEST_F(DiffDriveControllerTest, testNaNCmd) {
   ros::Duration(0.1).sleep();
 
   // send NaN
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 10; ++i)
+  {
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = NAN;
     cmd_vel.angular.z = NAN;
@@ -108,7 +112,8 @@ TEST_F(DiffDriveControllerTest, testNaNCmd) {
   EXPECT_DOUBLE_EQ(odom_msg.twist.linear.x, 0.0);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "diff_drive_nan_test");
 

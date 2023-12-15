@@ -32,48 +32,54 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64.h>
 
-
-class SimpleBotFixture : public ::testing::Test {
+class SimpleBotFixture : public ::testing::Test
+{
 protected:
   ros::Publisher pub;
   ros::Subscriber sub;
   ros::NodeHandle nh;
   double position;
 
-  void positionCB(const sensor_msgs::JointState& msg) {
+  void positionCB(const sensor_msgs::JointState& msg)
+  {
     position = msg.position[0];
   }
 
-  bool waitToReachTarget(double target, std::string& err, double precision=5e-2, double timeout=20.0) {
-    position = 1e3*precision + target; // make position != target
+  bool waitToReachTarget(double target, std::string& err,
+                         double precision = 5e-2, double timeout = 20.0)
+  {
+    position = 1e3 * precision + target;  // make position != target
     ros::Rate rate(20.0);
     std_msgs::Float64 cmd;
     cmd.data = target;
     ros::Time start = ros::Time::now();
 
-    while(ros::ok()) {
+    while (ros::ok())
+    {
       pub.publish(cmd);
-      if(std::fabs(target-position) < precision)
+      if (std::fabs(target - position) < precision)
         return true;
-      if( (ros::Time::now()-start).toSec() > timeout ) {
-        err = "Timed out, target = " + std::to_string(target) + ", current = " + std::to_string(position);
+      if ((ros::Time::now() - start).toSec() > timeout)
+      {
+        err = "Timed out, target = " + std::to_string(target) +
+              ", current = " + std::to_string(position);
         return false;
       }
       rate.sleep();
     }
 
-    err = "ROS shutdwon, target = " + std::to_string(target) + ", current = " + std::to_string(position);
+    err = "ROS shutdwon, target = " + std::to_string(target) +
+          ", current = " + std::to_string(position);
     return false;
   }
 
-
-  void SetUp() override {
+  void SetUp() override
+  {
     // setup
     position = 0.0;
     pub = nh.advertise<std_msgs::Float64>("position_controller/command", 1);
@@ -81,8 +87,8 @@ protected:
   }
 };
 
-
-TEST_F(SimpleBotFixture, TestPosition) {
+TEST_F(SimpleBotFixture, TestPosition)
+{
   ros::Duration(1.0).sleep();
   std::string err;
   EXPECT_TRUE(waitToReachTarget(1.0, err)) << err;
@@ -90,8 +96,8 @@ TEST_F(SimpleBotFixture, TestPosition) {
   EXPECT_TRUE(waitToReachTarget(0.0, err)) << err;
 }
 
-
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "dummy");
   ros::AsyncSpinner spinner(1);

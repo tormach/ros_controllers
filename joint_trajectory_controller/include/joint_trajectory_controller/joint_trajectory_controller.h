@@ -28,6 +28,5 @@
 
 /// \author Adolfo Rodriguez Tsouroukdissian, Stuart Glaser
 
-
 #include <joint_trajectory_controller/joint_trajectory_controller_fwd.h>
 #include <joint_trajectory_controller/joint_trajectory_controller_impl.h>

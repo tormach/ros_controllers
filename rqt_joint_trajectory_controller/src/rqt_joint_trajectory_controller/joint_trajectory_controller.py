@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: E722
 
 # Copyright (C) 2014, PAL Robotics S.L.
 #
@@ -25,7 +26,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
 import os
 import rospy
 import rospkg
@@ -36,8 +36,10 @@ from python_qt_binding.QtCore import QTimer, Signal
 from python_qt_binding.QtWidgets import QWidget, QFormLayout
 
 from control_msgs.msg import JointTrajectoryControllerState
-from controller_manager_msgs.utils\
-    import ControllerLister, ControllerManagerLister
+from controller_manager_msgs.utils import (
+    ControllerLister,
+    ControllerManagerLister,
+)
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from .double_editor import DoubleEditor
@@ -101,6 +103,7 @@ class JointTrajectoryController(Plugin):
     A reference implementation of the C{JointTrajectoryController} is
     available in the C{joint_trajectory_controller} ROS package.
     """
+
     _cmd_pub_freq = 10.0  # Hz
     _widget_update_freq = 30.0  # Hz
     _ctrlrs_update_freq = 1  # Hz
@@ -109,16 +112,18 @@ class JointTrajectoryController(Plugin):
     jointStateChanged = Signal([dict])
 
     def __init__(self, context):
-        super(JointTrajectoryController, self).__init__(context)
+        super().__init__(context)
         self.setObjectName('JointTrajectoryController')
 
         # Create QWidget and extend it with all the attributes and children
         # from the UI file
         self._widget = QWidget()
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('rqt_joint_trajectory_controller'),
-                               'resource',
-                               'joint_trajectory_controller.ui')
+        ui_file = os.path.join(
+            rp.get_path('rqt_joint_trajectory_controller'),
+            'resource',
+            'joint_trajectory_controller.ui',
+        )
         loadUi(ui_file, self._widget)
         self._widget.setObjectName('JointTrajectoryControllerUi')
         ns = rospy.get_namespace()[1:-1]
@@ -141,8 +146,9 @@ class JointTrajectoryController(Plugin):
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
         if context.serial_number() > 1:
-            self._widget.setWindowTitle(self._widget.windowTitle() +
-                                        (' (%d)' % context.serial_number()))
+            self._widget.setWindowTitle(
+                self._widget.windowTitle() + (' (%d)' % context.serial_number())
+            )
         # Add widget to the user interface
         context.add_widget(self._widget)
 
@@ -151,7 +157,7 @@ class JointTrajectoryController(Plugin):
         self._cm_ns = []  # Namespace of the selected controller manager
         self._joint_pos = {}  # name->pos map for joints of selected controller
         self._joint_names = []  # Ordered list of selected controller joints
-        self._robot_joint_limits = {} # Lazily evaluated on first use
+        self._robot_joint_limits = {}  # Lazily evaluated on first use
 
         # Timer for sending commands to active controller
         self._update_cmd_timer = QTimer(self)
@@ -160,22 +166,25 @@ class JointTrajectoryController(Plugin):
 
         # Timer for updating the joint widgets from the controller state
         self._update_act_pos_timer = QTimer(self)
-        self._update_act_pos_timer.setInterval(1000.0 /
-                                               self._widget_update_freq)
+        self._update_act_pos_timer.setInterval(
+            1000.0 / self._widget_update_freq
+        )
         self._update_act_pos_timer.timeout.connect(self._update_joint_widgets)
 
         # Timer for controller manager updates
         self._list_cm = ControllerManagerLister()
         self._update_cm_list_timer = QTimer(self)
-        self._update_cm_list_timer.setInterval(1000.0 /
-                                               self._ctrlrs_update_freq)
+        self._update_cm_list_timer.setInterval(
+            1000.0 / self._ctrlrs_update_freq
+        )
         self._update_cm_list_timer.timeout.connect(self._update_cm_list)
         self._update_cm_list_timer.start()
 
         # Timer for running controller updates
         self._update_jtc_list_timer = QTimer(self)
-        self._update_jtc_list_timer.setInterval(1000.0 /
-                                                self._ctrlrs_update_freq)
+        self._update_jtc_list_timer.setInterval(
+            1000.0 / self._ctrlrs_update_freq
+        )
         self._update_jtc_list_timer.timeout.connect(self._update_jtc_list)
         self._update_jtc_list_timer.start()
 
@@ -185,7 +194,7 @@ class JointTrajectoryController(Plugin):
         w.jtc_combo.currentIndexChanged[str].connect(self._on_jtc_change)
         w.cm_combo.currentIndexChanged[str].connect(self._on_cm_change)
 
-        self._cmd_pub = None    # Controller command publisher
+        self._cmd_pub = None  # Controller command publisher
         self._state_sub = None  # Controller state subscriber
 
         self._list_controllers = None
@@ -219,16 +228,16 @@ class JointTrajectoryController(Plugin):
             try:
                 idx = jtc_list.index(jtc_name)
                 jtc_combo.setCurrentIndex(idx)
-            except (ValueError):
+            except ValueError:
                 pass
-        except (ValueError):
+        except ValueError:
             pass
 
     # def trigger_configuration(self):
-        # Comment in to signal that the plugin has a way to configure
-        # This will enable a setting button (gear icon) in each dock widget
-        # title bar
-        # Usually used to open a modal configuration dialog
+    # Comment in to signal that the plugin has a way to configure
+    # This will enable a setting button (gear icon) in each dock widget
+    # title bar
+    # Usually used to open a modal configuration dialog
 
     def _update_cm_list(self):
         update_combo(self._widget.cm_combo, self._list_cm())
@@ -246,10 +255,12 @@ class JointTrajectoryController(Plugin):
             self._robot_joint_limits = get_joint_limits()  # Lazy evaluation
         valid_jtc = []
         for jtc_info in running_jtc:
-            has_limits = all(name in self._robot_joint_limits
-                             for name in _jtc_joint_names(jtc_info))
+            has_limits = all(
+                name in self._robot_joint_limits
+                for name in _jtc_joint_names(jtc_info)
+            )
             if has_limits:
-                valid_jtc.append(jtc_info);
+                valid_jtc.append(jtc_info)
         valid_jtc_names = [data.name for data in valid_jtc]
 
         # Update widget
@@ -259,7 +270,7 @@ class JointTrajectoryController(Plugin):
         self._speed_scale = val / self._speed_scaling_widget.slider.maximum()
 
     def _on_joint_state_change(self, actual_pos):
-        assert(len(actual_pos) == len(self._joint_pos))
+        assert len(actual_pos) == len(self._joint_pos)
         for name in actual_pos.keys():
             self._joint_pos[name]['position'] = actual_pos[name]
 
@@ -306,8 +317,9 @@ class JointTrajectoryController(Plugin):
     def _load_jtc(self):
         # Initialize joint data corresponding to selected controller
         running_jtc = self._running_jtc_info()
-        self._joint_names = next(_jtc_joint_names(x) for x in running_jtc
-                                 if x.name == self._jtc_name)
+        self._joint_names = next(
+            _jtc_joint_names(x) for x in running_jtc if x.name == self._jtc_name
+        )
         for name in self._joint_names:
             self._joint_pos[name] = {}
 
@@ -316,19 +328,22 @@ class JointTrajectoryController(Plugin):
             layout = self._widget.joint_group.layout()
             for name in self._joint_names:
                 limits = self._robot_joint_limits[name]
-                joint_widget = DoubleEditor(limits['min_position'],
-                                            limits['max_position'])
+                joint_widget = DoubleEditor(
+                    limits['min_position'], limits['max_position']
+                )
                 layout.addRow(name, joint_widget)
                 # NOTE: Using partial instead of a lambda because lambdas
                 # "will not evaluate/look up the argument values before it is
                 # effectively called, breaking situations like using a loop
                 # variable inside it"
                 from functools import partial
+
                 par = partial(self._update_single_cmd_cb, name=name)
                 joint_widget.valueChanged.connect(par)
         except:
             # TODO: Can we do better than swallow the exception?
             from sys import exc_info
+
             print('Unexpected error:', exc_info()[0])
 
         # Enter monitor mode (sending commands disabled)
@@ -338,13 +353,15 @@ class JointTrajectoryController(Plugin):
         jtc_ns = _resolve_controller_ns(self._cm_ns, self._jtc_name)
         state_topic = jtc_ns + '/state'
         cmd_topic = jtc_ns + '/command'
-        self._state_sub = rospy.Subscriber(state_topic,
-                                           JointTrajectoryControllerState,
-                                           self._state_cb,
-                                           queue_size=1)
-        self._cmd_pub = rospy.Publisher(cmd_topic,
-                                        JointTrajectory,
-                                        queue_size=1)
+        self._state_sub = rospy.Subscriber(
+            state_topic,
+            JointTrajectoryControllerState,
+            self._state_cb,
+            queue_size=1,
+        )
+        self._cmd_pub = rospy.Publisher(
+            cmd_topic, JointTrajectory, queue_size=1
+        )
 
         # Start updating the joint positions
         self.jointStateChanged.connect(self._on_joint_state_change)
@@ -363,7 +380,7 @@ class JointTrajectoryController(Plugin):
         # Clear joint widgets
         # NOTE: Implementation is a workaround for:
         # https://bugreports.qt-project.org/browse/QTBUG-15990 :(
-					
+
         layout = self._widget.joint_group.layout()
         if layout is not None:
             while layout.count():
@@ -380,13 +397,15 @@ class JointTrajectoryController(Plugin):
         self._widget.enable_button.setChecked(False)
 
     def _running_jtc_info(self):
-        from controller_manager_msgs.utils\
-            import filter_by_type, filter_by_state
+        from controller_manager_msgs.utils import (
+            filter_by_type,
+            filter_by_state,
+        )
 
         controller_list = self._list_controllers()
-        jtc_list = filter_by_type(controller_list,
-                                  'JointTrajectoryController',
-                                  match_substring=True)
+        jtc_list = filter_by_type(
+            controller_list, 'JointTrajectoryController', match_substring=True
+        )
         running_jtc_list = filter_by_state(jtc_list, 'running')
         return running_jtc_list
 
@@ -421,7 +440,7 @@ class JointTrajectoryController(Plugin):
             cmd = pos
             try:
                 cmd = self._joint_pos[name]['command']
-            except (KeyError):
+            except KeyError:
                 pass
             max_vel = self._robot_joint_limits[name]['max_velocity']
             dur.append(max(abs(cmd - pos) / max_vel, self._min_traj_dur))
@@ -438,22 +457,25 @@ class JointTrajectoryController(Plugin):
             try:
                 joint_pos = self._joint_pos[joint_name]['position']
                 joint_widgets[id].setValue(joint_pos)
-            except (KeyError):
+            except KeyError:
                 pass  # Can happen when first connected to controller
 
     def _joint_widgets(self):  # TODO: Cache instead of compute every time?
         widgets = []
         layout = self._widget.joint_group.layout()
         for row_id in range(layout.rowCount()):
-            widgets.append(layout.itemAt(row_id,
-                                         QFormLayout.FieldRole).widget())
+            widgets.append(
+                layout.itemAt(row_id, QFormLayout.FieldRole).widget()
+            )
         return widgets
+
 
 def _jtc_joint_names(jtc_info):
     # NOTE: We assume that there is at least one hardware interface that
     # claims resources (there should be), and the resource list is fetched
     # from the first available interface
     return jtc_info.claimed_resources[0].resources
+
 
 def _resolve_controller_ns(cm_ns, controller_name):
     """
@@ -478,7 +500,7 @@ def _resolve_controller_ns(cm_ns, controller_name):
     @return Controller namespace
     @rtype str
     """
-    assert(controller_name)
+    assert controller_name
     ns = cm_ns.rsplit('/', 1)[0]
     if ns != '/':
         ns += '/'
