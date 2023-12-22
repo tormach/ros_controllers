@@ -19,7 +19,8 @@ find_package(
              realtime_tools
              roscpp
              trajectory_msgs
-             urdf)
+             urdf
+             velocity_override_msgs)
 
 find_package(Boost REQUIRED)
 
@@ -36,6 +37,7 @@ catkin_package(
   roscpp
   trajectory_msgs
   urdf
+  velocity_override_msgs
   INCLUDE_DIRS
   include
   LIBRARIES

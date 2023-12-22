@@ -28,6 +28,7 @@
   <depend>realtime_tools</depend>
   <depend>roscpp</depend>
   <depend>urdf</depend>
+  <depend>velocity_override_msgs</depend>
 
   <build_depend>angles</build_depend>
   <build_depend>control_msgs</build_depend>
