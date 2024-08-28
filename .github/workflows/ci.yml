@@ -18,6 +18,6 @@ jobs:
           - {ROS_DISTRO: noetic, ROS_REPO: testing}
           - {ROS_DISTRO: noetic, UPSTREAM_WORKSPACE: "https://raw.githubusercontent.com/ros-controls/ros_control/$ROS_DISTRO-devel/ros_control.rosinstall -ros_controllers"}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - uses: ros-industrial/industrial_ci@master
         env: ${{matrix.env}}
