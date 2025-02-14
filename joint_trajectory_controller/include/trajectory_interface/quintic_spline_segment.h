@@ -158,15 +158,15 @@ public:
     return coefs_.size();
   }
 
-private:
+public:
   typedef std::array<Scalar, 6> SplineCoefficients;
+  std::vector<SplineCoefficients> coefs_;
 
   /** Coefficients represent a quintic polynomial like so:
    *
    * <tt> coefs_[0] + coefs_[1]*x + coefs_[2]*x^2 + coefs_[3]*x^3 +
    * coefs_[4]*x^4 + coefs_[5]*x^5 </tt>
    */
-  std::vector<SplineCoefficients> coefs_;
   Time duration_;
   Time start_time_;
   Time time_from_start_;

@@ -69,6 +69,10 @@ public:
    */
   virtual ~TrajectoryBuilder<SegmentImpl>() = default;
 
+  bool setDesiredPositions(const std::vector<double>& /*pos*/) {
+      return false;  // Default implementation does nothing and returns false
+  }
+
 private:
   using Segment = JointTrajectorySegment<SegmentImpl>;
   using TrajectoryPerJoint = std::vector<Segment>;
@@ -110,7 +114,7 @@ public:
    * @param trajectory [Out] Trajectory which has to be build.
    *
    */
-  virtual bool buildTrajectory(Trajectory* trajectory) = 0;
+  virtual bool buildTrajectory(Trajectory* trajectory, const double& velocity_scale) = 0;
 
 protected:
   //! @brief Return the set goal handle or a default one, if no goal handle was

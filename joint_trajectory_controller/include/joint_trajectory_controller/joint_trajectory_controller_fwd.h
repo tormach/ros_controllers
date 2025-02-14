@@ -258,6 +258,7 @@ protected:
   bool allow_partial_joints_goal_;
 
   bool rt_stop_event_triggered_;  // For RT use only!
+  double velocity_scale_;
 
   // ROS API
   ros::NodeHandle controller_nh_;
@@ -294,7 +295,7 @@ protected:
   /** Actual update method internals (caller manages realtime access to
    * trajectory) */
   void update_joint_trajectory(Trajectory& curr_traj, const TimeData& time_data,
-                               const ros::Duration& period);
+                               const ros::Duration& period, const double& velocity_scale);
 
   /** Do realtime-safe acquisitions of time / trajectory pointer data at the
    * start of an update */
@@ -348,7 +349,7 @@ protected:
    * @note This function is NOT thread safe but intended to be used in the
    * update-function.
    */
-  void updateStates(const ros::Time& sample_time, Trajectory const& traj);
+  void updateStates(const ros::Time& sample_time, Trajectory const& traj, const double& velocity_scale);
 
 protected:
   /**

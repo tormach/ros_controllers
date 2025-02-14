@@ -82,7 +82,7 @@ public:
    * @returns true if the building of the stop trajectory succeeds, otherwise
    false.
    */
-  bool buildTrajectory(Trajectory* hold_traj) override;
+  bool buildTrajectory(Trajectory* hold_traj, const double& velocity_scale) override;
 
 private:
   const typename Segment::Time stop_traj_duration_;
@@ -103,7 +103,7 @@ StopTrajectoryBuilder<SegmentImpl>::StopTrajectoryBuilder(
 }
 
 template <class SegmentImpl>
-bool StopTrajectoryBuilder<SegmentImpl>::buildTrajectory(Trajectory* hold_traj)
+bool StopTrajectoryBuilder<SegmentImpl>::buildTrajectory(Trajectory* hold_traj, const double& velocity_scale)
 {
   const unsigned int number_of_joints = hold_state_.position.size();
 

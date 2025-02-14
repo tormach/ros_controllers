@@ -435,7 +435,8 @@ void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
     curr_traj_ptr->started = true;
     rt_stop_event_triggered_ = false;
   }
-  update_joint_trajectory(curr_traj_ptr->trajectory, time_data, period);
+  const double velocity_scale = 1.0;
+  update_joint_trajectory(curr_traj_ptr->trajectory, time_data, period, velocity_scale);
 }
 
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
@@ -478,9 +479,9 @@ void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
 void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
     update_joint_trajectory(Trajectory& curr_traj, const TimeData& time_data,
-                            const ros::Duration& period)
+                            const ros::Duration& period, const double& velocity_scale)
 {
-  updateStates(time_data.uptime, curr_traj);
+  updateStates(time_data.uptime, curr_traj, velocity_scale);
 
   // Update current state and state error
   for (unsigned int i = 0; i < getNumberOfJoints(); ++i)
@@ -946,7 +947,7 @@ JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
 {
   rt_hold_traj_builder_->setStartTime(utime.toSec())
       ->setGoalHandle(gh)
-      ->buildTrajectory(&(rt_hold_trajectory_ptr_->trajectory));
+      ->buildTrajectory(&(rt_hold_trajectory_ptr_->trajectory), this->velocity_scale_);
   rt_hold_traj_builder_->reset();
   rt_hold_trajectory_ptr_->started =
       true;  // Treat this as part of the previously executing trajectory, so
@@ -1039,7 +1040,7 @@ inline unsigned int JointTrajectoryController<
 
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
 void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
-    updateStates(const ros::Time& sample_time, Trajectory const& traj)
+    updateStates(const ros::Time& sample_time, Trajectory const& traj, const double& velocity_scale)
 {
   old_desired_state_ = desired_state_;
 
@@ -1054,9 +1055,9 @@ void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
     // There's no acceleration data available in a joint handle
 
     desired_state_.position[joint_index] = desired_joint_state_.position[0];
-    desired_state_.velocity[joint_index] = desired_joint_state_.velocity[0];
+    desired_state_.velocity[joint_index] = desired_joint_state_.velocity[0] * velocity_scale;
     desired_state_.acceleration[joint_index] =
-        desired_joint_state_.acceleration[0];
+        desired_joint_state_.acceleration[0] * velocity_scale;
 
     state_error_.position[joint_index] = angles::shortest_angular_distance(
         current_state_.position[joint_index], desired_joint_state_.position[0]);

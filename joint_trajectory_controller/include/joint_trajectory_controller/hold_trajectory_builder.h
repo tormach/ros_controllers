@@ -61,7 +61,7 @@ public:
   /**
    * @brief See base class.
    */
-  bool buildTrajectory(Trajectory* hold_traj) override;
+  bool buildTrajectory(Trajectory* hold_traj, const double& velocity_scale) override;
 
 private:
   const std::vector<JointHandle>& joints_;
@@ -80,7 +80,7 @@ HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::HoldTrajectoryBuilder(
 
 template <class SegmentImpl, class HardwareInterface>
 bool HoldTrajectoryBuilder<SegmentImpl, HardwareInterface>::buildTrajectory(
-    Trajectory* hold_traj)
+    Trajectory* hold_traj, const double& velocity_scale)
 {
   if (!TrajectoryBuilder<SegmentImpl>::getStartTime())
   {

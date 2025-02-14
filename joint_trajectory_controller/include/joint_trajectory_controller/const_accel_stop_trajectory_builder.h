@@ -80,7 +80,7 @@ public:
    * @returns true if the building of the stop trajectory succeeds, otherwise
    * false.
    */
-  bool buildTrajectory(Trajectory* hold_traj) override;
+  bool buildTrajectory(Trajectory* hold_traj, const double& velocity_scale) override;
 
 protected:
   const std::vector<double> max_accelerations_;
@@ -106,8 +106,10 @@ ConstAccelStoptrajectoryBuilder<SegmentImpl>::ConstAccelStoptrajectoryBuilder(
 
 template <class SegmentImpl>
 bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(
-    Trajectory* hold_traj)
+    Trajectory* hold_traj, const double& velocity_scale)
 {
+  double velocity_scale_verified = (velocity_scale < 0.005) ? 0.01 : velocity_scale;
+
   const unsigned int number_of_joints = hold_state_.position.size();
 
   if (!TrajectoryBuilder<SegmentImpl>::getStartTime())
@@ -138,12 +140,14 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(
                                max_accelerations_[joint_index]));
   }
 
+  ts *=  velocity_scale_verified;
+
   const typename Segment::Time end_time{ start_time + ts };
 
   for (unsigned int joint_index = 0; joint_index < number_of_joints;
        ++joint_index)
   {
-    auto const v0 = hold_state_.velocity[joint_index];
+    auto const v0 = hold_state_.velocity[joint_index] * (1.0 / velocity_scale_verified);
     auto const p0 = hold_state_.position[joint_index];
     const double a = ts > 0 ? -v0 / ts : 0;
 
