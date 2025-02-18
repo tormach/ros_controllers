@@ -1203,6 +1203,17 @@ TEST_F(JointTrajectoryControllerTest, pathToleranceViolation)
   // Controller continues execution, see https://github.com/ros-controls/ros_controllers/issues/48
   // Make sure to restore an error-less state for the tests to continue
 
+  // Check that we're not moving
+  StateConstPtr state1 = getState();
+  ros::Duration(0.5).sleep(); // Wait
+  StateConstPtr state2 =  getState();
+  for (unsigned int i = 0; i < n_joints; ++i)
+  {
+    EXPECT_NEAR(state1->desired.positions[i],     state2->desired.positions[i],     EPS);
+    EXPECT_NEAR(state1->desired.velocities[i],    state2->desired.velocities[i],    EPS);
+    EXPECT_NEAR(state1->desired.accelerations[i], state2->desired.accelerations[i], EPS);
+  }
+
   // Restore perfect control
   {
     std_msgs::Float64 smoothing;
@@ -1279,7 +1290,7 @@ TEST_F(JointTrajectoryControllerTest, goalToleranceViolation)
   // Make robot respond with a delay
   {
     std_msgs::Float64 smoothing;
-    smoothing.data = 0.95;
+    smoothing.data = 0.98;
     smoothing_pub.publish(smoothing);
     ASSERT_TRUE(waitForRobotReady());
   }
@@ -1307,6 +1318,9 @@ TEST_F(JointTrajectoryControllerTest, goalToleranceViolation)
   // Controller continues execution, see https://github.com/ros-controls/ros_controllers/issues/48
   // Make sure to restore an error-less state for the tests to continue
 
+  // Check that we're not moving after restoring perfect control
+  StateConstPtr state1 = getState();
+
   // Restore perfect control
   {
     std_msgs::Float64 smoothing;
@@ -1317,6 +1331,13 @@ TEST_F(JointTrajectoryControllerTest, goalToleranceViolation)
 
   ros::Duration timeout = getTrajectoryDuration(traj_goal.trajectory) + ros::Duration(TIMEOUT_TRAJ_EXECUTION_S);
   EXPECT_TRUE(waitForStop(timeout));
+
+  StateConstPtr state2 =  getState();
+  for (unsigned int i = 0; i < n_joints; ++i)
+  {
+    EXPECT_NEAR(state1->actual.positions[i],     state2->actual.positions[i],     EPS);
+    EXPECT_NEAR(state1->actual.velocities[i],    state2->actual.velocities[i],    EPS);
+  }
 }
 
 TEST_F(JointTrajectoryControllerTest, goalToleranceViolationSingleJoint)
@@ -1380,11 +1401,21 @@ TEST_F(JointTrajectoryControllerTest, goalToleranceViolationSingleJoint)
   // Controller continues execution, see https://github.com/ros-controls/ros_controllers/issues/48
   // Make sure to restore an error-less state for the tests to continue
 
+  // Check that we're not moving after restoring perfect control
+  StateConstPtr state1 = getState();
+
   // Restore perfect control
   smoothings.data.assign({0., 0.});
   smoothings_pub.publish(smoothings);
   ASSERT_TRUE(waitForRobotReady());
   EXPECT_TRUE(waitForStop(restore_timeout));
+
+  StateConstPtr state2 =  getState();
+  for (unsigned int i = 0; i < n_joints; ++i)
+  {
+    EXPECT_NEAR(state1->actual.positions[i],     state2->actual.positions[i],     EPS);
+    EXPECT_NEAR(state1->actual.velocities[i],    state2->actual.velocities[i],    EPS);
+  }
 }
 
 int main(int argc, char** argv)
