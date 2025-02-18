@@ -61,20 +61,6 @@ struct TimeData
   ros::Time uptime;      ///< Controller uptime. Set to zero at every restart.
 };
 
-class SomeObjectBase
-{
-public:
-  SomeObjectBase(std::string name = "SomeObjectBase")
-  {
-    this->name = name;
-    ROS_WARN("%s CONSTRUCTOR", name.c_str());
-  }
-  ~SomeObjectBase()
-  {
-    ROS_WARN("%s DESTRUCTOR", name.c_str());
-  }
-  std::string name = "SomeObjectBase";
-};
 
 /**
  * \brief Controller for executing joint-space trajectories on a group of
@@ -380,12 +366,6 @@ private:
    * update-function.
    */
   void setActionFeedback();
-
-  // protected:
-  //   double scaling_factor_{ 1.0 };
-  // SomeObjectBase some_object_base_;
-  SomeObjectBase some_object_base_ = SomeObjectBase("SomeObjectBase "
-                                                    "constructor fun");
 };
 
 }  // namespace joint_trajectory_controller

@@ -114,12 +114,14 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(
 
   if (!TrajectoryBuilder<SegmentImpl>::getStartTime())
   {
+    ROS_WARN("Cannot build stop trajectory without start time.");
     return false;
   }
 
   if (!TrajectoryBuilder<SegmentImpl>::isTrajectoryValid(hold_traj,
                                                          number_of_joints, 1))
   {
+    ROS_WARN("Cannot build stop trajectory without valid trajectory.");
     return false;
   }
 
@@ -131,7 +133,6 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(
   };
 
   // 1) compute the worst-case stop duration based on prescribed limits
-
   double ts = 0;
   for (unsigned int joint_index = 0; joint_index < number_of_joints;
        ++joint_index)
@@ -140,7 +141,6 @@ bool ConstAccelStoptrajectoryBuilder<SegmentImpl>::buildTrajectory(
                                max_accelerations_[joint_index]));
   }
 
-  ts *=  velocity_scale_verified;
 
   const typename Segment::Time end_time{ start_time + ts };
 

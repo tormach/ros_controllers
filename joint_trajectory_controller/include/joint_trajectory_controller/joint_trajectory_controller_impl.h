@@ -351,8 +351,6 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   query_state_service_ = controller_nh_.advertiseService(
       "query_state", &JointTrajectoryController::queryStateService, this);
 
-  some_object_base_ = SomeObjectBase("SomeObjectBase INIT fun");
-
   // Preeallocate resources
   current_state_ = typename Segment::State(n_joints);
   old_desired_state_ = typename Segment::State(n_joints);
@@ -627,12 +625,8 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   Options options;
   options.error_string = error_string;
   std::string error_string_tmp;
-  // Officially accepted queued motion settings here, even if the trajectory
-  // update fails. The planning pipeline must update the settings before
-  // requesting a new trajectory.
   const auto motion_settings = claimQueuedSettings();
 
-  // Preconditions
   if (!this->isRunning())
   {
     error_string_tmp = "Can't accept new commands. Controller is not running.";
@@ -655,19 +649,41 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
     return true;
   }
 
-  // Time data
-  TimeData* time_data =
-      time_data_.readFromRT();  // TODO: Grrr, we need a lock-free data
-                                // structure here!
-  // ROS_INFO_STREAM("updateTrajectoryCommand at time: " << time_data->uptime);
-
-  // Time of the next update
+  TimeData* time_data = time_data_.readFromRT();
   const ros::Time next_update_time = time_data->time + time_data->period;
-
-  // Uptime of the next update
   ros::Time next_update_uptime = time_data->uptime + time_data->period;
 
-  // Trajectory initialization options
+  bool needs_time_adjustment = false;
+  ros::Duration time_offset(0.0);
+  ros::Duration first_point_time = msg->points[0].time_from_start;
+
+  if (first_point_time.toSec() > 0.001) {
+    needs_time_adjustment = true;
+    // ROS_WARN_STREAM_NAMED(name_, "First point starts at non-zero time: " << first_point_time.toSec());
+  }
+  
+  if ((msg->header.stamp - time_data->time).toSec() > time_data->period.toSec()) {
+    needs_time_adjustment = true;
+    time_offset = msg->header.stamp - time_data->time;
+    ROS_WARN_STREAM_NAMED(name_, "Time gap detected: " << time_offset.toSec());
+  }
+
+  trajectory_msgs::JointTrajectoryPtr adjusted_msg;
+  if (needs_time_adjustment) {
+    adjusted_msg.reset(new trajectory_msgs::JointTrajectory(*msg));
+    // Set start time slightly in the future to prevent points being dropped
+    adjusted_msg->header.stamp = time_data->time + time_data->period;
+    
+    for (auto& point : adjusted_msg->points) {
+      // Ensure first point starts at time_data->period
+      if (point.time_from_start.toSec() < time_data->period.toSec()) {
+        point.time_from_start = time_data->period;
+      } else if (first_point_time.toSec() > 0.001) {
+        point.time_from_start = time_data->period + (point.time_from_start - first_point_time);
+      }
+    }
+  }
+
   ExtendedTrajectoryPtr curr_traj_ptr;
   curr_trajectory_box_.get(curr_traj_ptr);
 
@@ -679,42 +695,43 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   options.default_tolerances = &default_tolerances_;
   options.allow_partial_joints_goal = allow_partial_joints_goal_;
 
-  // Update currently executing trajectory
   try
   {
     ExtendedTrajectoryPtr traj_ptr(new ExtendedTrajectory());
+    const JointTrajectoryConstPtr& traj_msg = needs_time_adjustment ? 
+      boost::make_shared<trajectory_msgs::JointTrajectory>(*adjusted_msg) : msg;
 
-    // Hold current position if trajectory is empty
-    traj_ptr->trajectory =
-        initJointTrajectory<Trajectory>(*msg, next_update_time, options);
-    // Add queued motion settings (and reset the queue value for the next
-    // service call)
+    const ros::Time pre_init_time = time_data_.readFromRT()->time;
+    traj_ptr->trajectory = initJointTrajectory<Trajectory>(*traj_msg, next_update_time, options);
+    const ros::Time post_init_time = time_data_.readFromRT()->time;
     traj_ptr->motion_settings = motion_settings;
+
     if (!traj_ptr->trajectory.empty())
     {
+      const ros::Duration init_delay = post_init_time - pre_init_time;
+      for (auto& joint_trajectory : traj_ptr->trajectory)
+      {
+          for (auto& segment : joint_trajectory)
+          {
+              segment.start_time_ += init_delay.toSec();
+          }
+      }
       curr_trajectory_box_.set(traj_ptr);
-    }
-    else
-    {
-      return false;
+      return true;
     }
   }
   catch (const std::exception& ex)
   {
     ROS_ERROR_STREAM_NAMED(name_, ex.what());
     options.setErrorString(ex.what());
-    return false;
   }
   catch (...)
   {
-    error_string_tmp = "Unexpected exception caught when initializing "
-                       "trajectory from ROS message data.";
+    error_string_tmp = "Unexpected exception caught when initializing trajectory.";
     ROS_ERROR_STREAM_NAMED(name_, error_string_tmp);
     options.setErrorString(error_string_tmp);
-    return false;
   }
-
-  return true;
+  return false;
 }
 
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
@@ -956,6 +973,8 @@ JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   curr_trajectory_box_.set(rt_hold_trajectory_ptr_);
   rt_stop_event_triggered_ = true;
 }
+
+
 
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
 inline void
