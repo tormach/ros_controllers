@@ -202,6 +202,8 @@ namespace diff_drive_controller{
       double publish_rate;
       bool enable_odom_tf;
 
+      double linear_min_acceleration;
+
       DynamicParams()
         : left_wheel_radius_multiplier(1.0)
         , right_wheel_radius_multiplier(1.0)
@@ -209,6 +211,7 @@ namespace diff_drive_controller{
         , publish_cmd(false)
         , publish_rate(50)
         , enable_odom_tf(true)
+        , linear_min_acceleration(-1.0)
       {}
 
       friend std::ostream& operator<<(std::ostream& os, const DynamicParams& params)
@@ -223,7 +226,10 @@ namespace diff_drive_controller{
            << "\tPublication parameters:\n"
            << "\t\tPublish executed velocity command: " << (params.publish_cmd?"enabled":"disabled") << "\n"
            << "\t\tPublication rate: " << params.publish_rate                 << "\n"
-           << "\t\tPublish frame odom on tf: " << (params.enable_odom_tf?"enabled":"disabled");
+           << "\t\tPublish frame odom on tf: " << (params.enable_odom_tf?"enabled":"disabled") << "\n"
+           //
+           << "\tControl parameters:\n"
+           << "\t\tLinear minimum acceleration: " << params.linear_min_acceleration;
 
         return os;
       }

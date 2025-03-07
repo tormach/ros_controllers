@@ -364,6 +364,8 @@ namespace diff_drive_controller{
     dynamic_params.publish_rate = publish_rate;
     dynamic_params.enable_odom_tf = enable_odom_tf_;
 
+    dynamic_params.linear_min_acceleration = limiter_lin_.min_acceleration;
+
     dynamic_params_.writeFromNonRT(dynamic_params);
 
     // Initialize dynamic_reconfigure server
@@ -374,6 +376,8 @@ namespace diff_drive_controller{
 
     config.publish_rate = publish_rate;
     config.enable_odom_tf = enable_odom_tf_;
+
+    config.linear_min_acceleration = limiter_lin_.min_acceleration;
 
     dyn_reconf_server_ = std::make_shared<ReconfigureServer>(dyn_reconf_server_mutex_, controller_nh);
 
@@ -744,6 +748,8 @@ namespace diff_drive_controller{
 
     dynamic_params.enable_odom_tf = config.enable_odom_tf;
 
+    dynamic_params.linear_min_acceleration = config.linear_min_acceleration;
+
     dynamic_params_.writeFromNonRT(dynamic_params);
 
     ROS_INFO_STREAM_NAMED(name_, "Dynamic Reconfigure:\n" << dynamic_params);
@@ -757,6 +763,8 @@ namespace diff_drive_controller{
     left_wheel_radius_multiplier_  = dynamic_params.left_wheel_radius_multiplier;
     right_wheel_radius_multiplier_ = dynamic_params.right_wheel_radius_multiplier;
     wheel_separation_multiplier_   = dynamic_params.wheel_separation_multiplier;
+
+    limiter_lin_.min_acceleration = dynamic_params.linear_min_acceleration;
 
     publish_period_ = ros::Duration(1.0 / dynamic_params.publish_rate);
     enable_odom_tf_ = dynamic_params.enable_odom_tf;

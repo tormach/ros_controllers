@@ -56,9 +56,9 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
     EXPECT_EQ(false, srv_resp.config.bools[0].value);
   }
 
-  EXPECT_EQ(4, srv_resp.config.doubles.size());
+  EXPECT_EQ(5, srv_resp.config.doubles.size());
 
-  if (srv_resp.config.doubles.size() >= 4)
+  if (srv_resp.config.doubles.size() >= 5)
   {
     EXPECT_EQ("left_wheel_radius_multiplier", srv_resp.config.doubles[0].name);
     EXPECT_EQ(1, srv_resp.config.doubles[0].value);
@@ -71,6 +71,9 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
 
     EXPECT_EQ("publish_rate", srv_resp.config.doubles[3].name);
     EXPECT_EQ(50, srv_resp.config.doubles[3].value);
+
+    EXPECT_EQ("linear_min_acceleration", srv_resp.config.doubles[4].name);
+    EXPECT_EQ(-1, srv_resp.config.doubles[4].value);
   }
 
   dynamic_reconfigure::DoubleParameter double_param;
@@ -94,6 +97,11 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
 
   srv_req.config.doubles.push_back(double_param);
 
+  double_param.name = "linear_min_acceleration";
+  double_param.value = -2;
+
+  srv_req.config.doubles.push_back(double_param);
+
   dynamic_reconfigure::BoolParameter bool_param;
   bool_param.name = "enable_odom_tf";
   bool_param.value = false;
@@ -111,9 +119,9 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
     EXPECT_EQ(false, srv_resp.config.bools[0].value);
   }
 
-  EXPECT_EQ(4, srv_resp.config.doubles.size());
+  EXPECT_EQ(5, srv_resp.config.doubles.size());
 
-  if (srv_resp.config.doubles.size() >= 4)
+  if (srv_resp.config.doubles.size() >= 5)
   {
     EXPECT_EQ("left_wheel_radius_multiplier", srv_resp.config.doubles[0].name);
     EXPECT_EQ(0.95, srv_resp.config.doubles[0].value);
@@ -126,6 +134,9 @@ TEST_F(DiffDriveControllerTest, testDynReconfServerAlive)
 
     EXPECT_EQ("publish_rate", srv_resp.config.doubles[3].name);
     EXPECT_EQ(150, srv_resp.config.doubles[3].value);
+
+    EXPECT_EQ("linear_min_acceleration", srv_resp.config.doubles[4].name);
+    EXPECT_EQ(-2, srv_resp.config.doubles[4].value);
   }
 }
 
