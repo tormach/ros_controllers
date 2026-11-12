@@ -139,6 +139,23 @@ std::string getLeafNamespace(const ros::NodeHandle& nh)
   return complete_ns.substr(id + 1);
 }
 
+// Like trajectory_interface::sample(), but before the trajectory starts (a new trajectory starts slightly
+// in the future, see init_delay in updateTrajectoryCommand) returns its first segment and its start state
+// (position, velocity, acceleration), so the command continues from where the new trajectory begins.
+template <class TrajectoryPerJoint>
+typename TrajectoryPerJoint::const_iterator
+sampleOrStart(const TrajectoryPerJoint& traj, double time,
+              typename TrajectoryPerJoint::value_type::State& state)
+{
+  typename TrajectoryPerJoint::const_iterator it = trajectory_interface::sample(traj, time, state);
+  if (it == traj.end() && !traj.empty() && time < traj.front().startTime())
+  {
+    it = traj.begin();
+    it->sample(it->startTime(), state);
+  }
+  return it;
+}
+
 }  // namespace internal
 
 template <class SegmentImpl, class HardwareInterface, class MotionSettings>
@@ -486,7 +503,7 @@ void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
   for (unsigned int i = 0; i < getNumberOfJoints(); ++i)
   {
     typename TrajectoryPerJoint::const_iterator segment_it =
-        sample(curr_traj[i], time_data.uptime.toSec(), desired_joint_state_);
+        internal::sampleOrStart(curr_traj[i], time_data.uptime.toSec(), desired_joint_state_);
     if (curr_traj[i].end() == segment_it)
     {
       // Non-realtime safe, but should never happen under normal operation
@@ -1075,7 +1092,7 @@ void JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
        ++joint_index)
   {
     const auto segment =
-        sample(traj[joint_index], sample_time.toSec(), desired_joint_state_);
+        internal::sampleOrStart(traj[joint_index], sample_time.toSec(), desired_joint_state_);
 
     current_state_.position[joint_index] = joints_[joint_index].getPosition();
     current_state_.velocity[joint_index] = joints_[joint_index].getVelocity();
