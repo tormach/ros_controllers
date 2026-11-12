@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <joint_trajectory_controller/joint_trajectory_controller_fwd.h>
 #include <joint_trajectory_controller/const_accel_stop_trajectory_builder.h>
 
@@ -716,6 +717,13 @@ bool JointTrajectoryController<SegmentImpl, HardwareInterface, MotionSettings>::
               segment.start_time_ += init_delay.toSec();
           }
       }
+      // Free trajectories nobody else uses any more here, in the non-realtime thread
+      std::lock_guard<std::mutex> lock(received_trajectories_mutex_);
+      received_trajectories_.erase(
+          std::remove_if(received_trajectories_.begin(), received_trajectories_.end(),
+                         [](const ExtendedTrajectoryPtr& t) { return t.use_count() == 1; }),
+          received_trajectories_.end());
+      received_trajectories_.push_back(traj_ptr);
       curr_trajectory_box_.set(traj_ptr);
       return true;
     }

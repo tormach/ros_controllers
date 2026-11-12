@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 // Boost
 #include <boost/shared_ptr.hpp>
@@ -208,6 +210,10 @@ protected:
    * unchanged.
    */
   TrajectoryBox curr_trajectory_box_;
+  /// Non-realtime owner of every received trajectory, so the realtime thread never drops the last
+  /// reference (freeing a long trajectory there stalls the control loop); see updateTrajectoryCommand.
+  std::vector<ExtendedTrajectoryPtr> received_trajectories_;
+  std::mutex received_trajectories_mutex_;
   ExtendedTrajectoryPtr rt_hold_trajectory_ptr_;  ///< For use in realtime only,
                                                   ///< for plan / execution of a
                                                   ///< stop / hold requested
